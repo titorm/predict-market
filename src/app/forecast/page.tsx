@@ -19,13 +19,16 @@ import {
   CaretUp,
   X,
   Storefront,
+  Info,
 } from '@phosphor-icons/react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { useToast } from '@/components/ui/Toast';
 import { ForecastResultsDrawer } from '@/components/forecast/ForecastResultsDrawer';
+import { PredictMarketLoader } from '@/components/ui/PredictMarketLoader';
 import type {
   BasketForecastReport,
 } from '@/core/engine/GroceryForecastEngine';
@@ -47,11 +50,21 @@ interface CartItem {
 
 interface AvailableReceipt {
   id: string;
-  trade_name: string;
-  city: string;
-  issued_at: string;
-  total_amount: number;
-  items_count: number;
+  trade_name?: string;
+  city?: string;
+  issued_at?: string;
+  total_amount?: number | string;
+  items_count?: number | string;
+  issuedAt?: string;
+  totalAmount?: number | string;
+  netAmount?: number | string;
+  itemsCount?: number | string;
+  store?: {
+    id?: string;
+    name?: string;
+    corporateName?: string;
+    city?: string;
+  };
 }
 
 interface CatalogProduct {
@@ -64,17 +77,25 @@ interface CatalogProduct {
 }
 
 interface ReceiptDetailItem {
-  canonical_product_id: string | null;
-  commercial_name: string | null;
-  raw_description: string;
-  category: string | null;
-  standard_unit: string | null;
-  unit_of_measure: string;
+  id?: string;
+  canonical_product_id?: string | null;
+  canonicalProductId?: string | null;
+  commercial_name?: string | null;
+  commercialName?: string | null;
+  raw_description?: string;
+  rawDescription?: string;
+  category?: string | null;
+  standard_unit?: string | null;
+  standardUnit?: string | null;
+  unit_of_measure?: string;
+  unitOfMeasure?: string;
   quantity: number | string;
-  unit_price: number | string;
+  unit_price?: number | string;
+  unitPrice?: number | string;
 }
 
 export default function ForecastCartPage() {
+  const toast = useToast();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
   const [receiptsList, setReceiptsList] = useState<AvailableReceipt[]>([]);
@@ -158,6 +179,17 @@ export default function ForecastCartPage() {
     }
   };
 
+  const getReceiptStoreName = (r: AvailableReceipt): string =>
+    r.store?.name || r.trade_name || 'Supermercado';
+
+  const getReceiptDate = (r: AvailableReceipt): string =>
+    r.issuedAt || r.issued_at || '';
+
+  const getReceiptAmount = (r: AvailableReceipt): number => {
+    const raw = r.totalAmount ?? r.netAmount ?? r.total_amount ?? 0;
+    return Number(raw) || 0;
+  };
+
   const filteredCatalog = useMemo(() => {
     if (!searchQuery.trim()) return catalog.slice(0, 6);
     const q = searchQuery.toLowerCase().trim();
@@ -237,28 +269,67 @@ export default function ForecastCartPage() {
       const res = await fetch(`/api/receipts/${receiptId}`);
       if (res.ok) {
         const data = (await res.json()) as {
-          receipt: { trade_name: string };
-          items: ReceiptDetailItem[];
+          receipt?: {
+            trade_name?: string;
+            store?: { name?: string };
+          };
+          store?: {
+            name?: string;
+          };
+          items?: ReceiptDetailItem[];
         };
 
-        const storeName = data.receipt?.trade_name || 'Nota';
-        const newItems: CartItem[] = (data.items || [])
-          .filter((item) => item.canonical_product_id)
-          .map((item) => ({
-            canonicalProductId: item.canonical_product_id!,
-            name: item.commercial_name || item.raw_description,
-            category: item.category || 'Geral',
-            unit: item.standard_unit || item.unit_of_measure || 'UN',
-            quantity: Math.max(1, Math.round(Number(item.quantity) || 1)),
-            estimatedUnitPrice: Number(item.unit_price) || 15.0,
+        const storeName =
+          data.store?.name ||
+          data.receipt?.store?.name ||
+          data.receipt?.trade_name ||
+          'Nota Fiscal';
+
+        const rawItems = data.items || [];
+        const newItems: CartItem[] = [];
+        for (const item of rawItems) {
+          const canonicalId = item.canonicalProductId || item.canonical_product_id;
+          if (!canonicalId) continue;
+          const name =
+            item.commercialName ||
+            item.commercial_name ||
+            item.rawDescription ||
+            item.raw_description ||
+            'Produto';
+          const category = item.category || 'Geral';
+          const unit =
+            item.standardUnit ||
+            item.standard_unit ||
+            item.unitOfMeasure ||
+            item.unit_of_measure ||
+            'UN';
+          const quantity = Math.max(1, Math.round(Number(item.quantity) || 1));
+          const price = Number(item.unitPrice ?? item.unit_price) || 15.0;
+
+          newItems.push({
+            canonicalProductId: canonicalId,
+            name,
+            category,
+            unit,
+            quantity,
+            estimatedUnitPrice: price,
             origin: `Nota ${storeName}`,
-          }));
+          });
+        }
 
         queueMicrotask(() => {
           setCartItems(newItems);
+          if (newItems.length > 0) {
+            toast.success(`Carregados ${newItems.length} produtos de ${storeName}!`);
+          } else {
+            toast.warning('A nota fiscal não possui produtos catalogados.');
+          }
         });
+      } else {
+        toast.error('Erro ao consultar os detalhes da nota fiscal.');
       }
     } catch {
+      toast.error('Falha de conexão ao carregar nota fiscal.');
     } finally {
       queueMicrotask(() => {
         setIsLoadingReceipt(false);
@@ -279,10 +350,43 @@ export default function ForecastCartPage() {
         if (data?.report) {
           queueMicrotask(() => {
             setSmartReport(data.report);
+
+            if (data.report.suggestedItems.length > 0) {
+              const newItems: CartItem[] = data.report.suggestedItems.map((item) => ({
+                canonicalProductId: item.canonicalProductId,
+                name: item.commercialName,
+                category: item.category,
+                unit: item.standardUnit,
+                quantity: item.recommendedQuantity,
+                estimatedUnitPrice: item.estimatedUnitPrice,
+                origin: 'Inteligente (Despensa)',
+                cadenceLabel: item.cadenceLabel,
+              }));
+              setCartItems(newItems);
+              toast.success(`Lista inteligente: ${newItems.length} itens com reposição recomendada carregados!`);
+            } else if (data.report.stockedItems.length > 0) {
+              const pantryItems: CartItem[] = data.report.stockedItems.map((item) => ({
+                canonicalProductId: item.canonicalProductId,
+                name: item.commercialName,
+                category: item.category,
+                unit: item.standardUnit,
+                quantity: item.recommendedQuantity || 1,
+                estimatedUnitPrice: item.estimatedUnitPrice,
+                origin: 'Despensa (Cadência)',
+                cadenceLabel: item.cadenceLabel,
+              }));
+              setCartItems(pantryItems);
+              toast.info(`Despensa em dia! ${pantryItems.length} itens frequentes carregados para simulação.`);
+            } else {
+              toast.warning('Nenhum produto cadastrado na despensa ainda.');
+            }
           });
         }
+      } else {
+        toast.error('Erro ao calcular reposição heurística.');
       }
     } catch {
+      toast.error('Falha de conexão ao sugerir lista inteligente.');
     } finally {
       queueMicrotask(() => {
         setIsLoadingSuggestions(false);
@@ -445,7 +549,7 @@ export default function ForecastCartPage() {
                     >
                       {receiptsList.map((r) => (
                         <option key={r.id} value={r.id}>
-                          {r.trade_name} ({formatDate(r.issued_at)}) · {formatBRL(Number(r.total_amount))}
+                          {getReceiptStoreName(r)} ({formatDate(getReceiptDate(r))}) · {formatBRL(getReceiptAmount(r))}
                         </option>
                       ))}
                     </select>
@@ -458,7 +562,7 @@ export default function ForecastCartPage() {
                       className="w-full gap-2 rounded-lg"
                     >
                       {isLoadingReceipt ? (
-                        <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        <PredictMarketLoader size={18} />
                       ) : (
                         <Receipt size={16} weight="bold" />
                       )}
@@ -483,11 +587,11 @@ export default function ForecastCartPage() {
                     Lista Inteligente Heurística
                   </h3>
                   <Badge variant="optimistic" className="text-[10px] py-0 px-1.5">
-                    IA
+                    Motor Local
                   </Badge>
                 </div>
                 <p className="text-[12px] text-muted">
-                  Analisa automaticamente sua cadência de compras (ex: bimestral, mensal) e preenche os itens com estoque esgotado.
+                  Motor estatístico local: analisa sua frequência real de compras e projeta o reabastecimento ideal da despensa sem chaves externas.
                 </p>
               </div>
 
@@ -500,7 +604,7 @@ export default function ForecastCartPage() {
                   className="w-full gap-2 rounded-lg"
                 >
                   {isLoadingSuggestions ? (
-                        <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                    <PredictMarketLoader size={18} />
                   ) : (
                     <Sparkle size={16} weight="bold" />
                   )}
@@ -583,7 +687,7 @@ export default function ForecastCartPage() {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-primary/40 bg-primary/10 text-[12px] font-semibold text-primary hover:bg-primary/20 transition-colors"
                 >
                   {isLoadingSuggestions ? (
-                    <div className="w-3.5 h-3.5 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
+                    <PredictMarketLoader size={16} />
                   ) : (
                     <Brain size={15} weight="bold" />
                   )}
@@ -611,16 +715,18 @@ export default function ForecastCartPage() {
                         Reposição Heurística da Despensa
                       </h3>
                       <Badge variant="optimistic" className="text-[11px] py-0.5">
-                        Cadência Real
+                        Heurística Local
                       </Badge>
                     </div>
                     <p className="text-[12px] text-muted mt-0.5">
-                      Itens com consumo periódico expirado ou estoque baixo.
+                      {smartReport.suggestedItems.length > 0
+                        ? 'Itens com consumo periódico expirado ou estoque baixo.'
+                        : 'Sua despensa foi reabastecida recentemente. Todos os itens constam em estoque.'}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {smartReport.suggestedItems.length > 0 && (
+                    {smartReport.suggestedItems.length > 0 ? (
                       <Button
                         variant="primary"
                         size="sm"
@@ -628,9 +734,32 @@ export default function ForecastCartPage() {
                         className="gap-1.5 rounded-full text-[12px] h-8 px-3"
                       >
                         <CheckCircle size={14} weight="bold" />
-                        <span>Adicionar Todos ({smartReport.suggestedItems.length})</span>
+                        <span>Adicionar Sugeridos ({smartReport.suggestedItems.length})</span>
                       </Button>
-                    )}
+                    ) : smartReport.stockedItems.length > 0 ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => {
+                          const items: CartItem[] = smartReport.stockedItems.map((item) => ({
+                            canonicalProductId: item.canonicalProductId,
+                            name: item.commercialName,
+                            category: item.category,
+                            unit: item.standardUnit,
+                            quantity: item.recommendedQuantity || 1,
+                            estimatedUnitPrice: item.estimatedUnitPrice,
+                            origin: 'Despensa (Cadência)',
+                            cadenceLabel: item.cadenceLabel,
+                          }));
+                          setCartItems(items);
+                          toast.success(`${items.length} itens da despensa adicionados ao carrinho!`);
+                        }}
+                        className="gap-1.5 rounded-full text-[12px] h-8 px-3"
+                      >
+                        <CheckCircle size={14} weight="bold" />
+                        <span>Carregar Itens da Despensa ({smartReport.stockedItems.length})</span>
+                      </Button>
+                    ) : null}
                     <button
                       type="button"
                       onClick={() => setIsSuggestOpen(false)}
@@ -642,38 +771,71 @@ export default function ForecastCartPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                  {smartReport.suggestedItems.map((item) => (
-                    <div
-                      key={item.canonicalProductId}
-                      className="p-3 rounded-lg border border-hairline bg-canvas flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[13px]"
-                    >
-                      <div className="min-w-0 flex-1 space-y-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-semibold text-ink">{item.commercialName}</span>
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-danger/10 text-danger border border-danger/20">
-                            {item.status === 'DEPLETED' ? 'Esgotado' : 'Estoque Baixo'}
-                          </span>
+                {smartReport.suggestedItems.length > 0 ? (
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {smartReport.suggestedItems.map((item) => (
+                      <div
+                        key={item.canonicalProductId}
+                        className="p-3 rounded-lg border border-hairline bg-canvas flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[13px]"
+                      >
+                        <div className="min-w-0 flex-1 space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold text-ink">{item.commercialName}</span>
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-danger/10 text-danger border border-danger/20">
+                              {item.status === 'DEPLETED' ? 'Esgotado' : 'Estoque Baixo'}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-muted">{item.reason}</p>
                         </div>
-                        <p className="text-[11px] text-muted">{item.reason}</p>
-                      </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-[12px] font-bold text-ink tabular-nums">
-                          {item.recommendedQuantity} {item.standardUnit}
-                        </span>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => handleAddSingleSuggestion(item)}
-                          className="text-[11px] h-7 px-2.5 rounded-full"
-                        >
-                          Adicionar
-                        </Button>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-[12px] font-bold text-ink tabular-nums">
+                            {item.recommendedQuantity} {item.standardUnit}
+                          </span>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleAddSingleSuggestion(item)}
+                            className="text-[11px] h-7 px-2.5 rounded-full"
+                          >
+                            Adicionar
+                          </Button>
+                        </div>
                       </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="p-3.5 rounded-lg bg-surface-soft border border-hairline flex items-center gap-3 text-[13px] text-muted">
+                      <CheckCircle size={20} weight="fill" className="text-primary shrink-0" />
+                      <span>
+                        Nenhum item com estoque esgotado no momento. Exibindo {smartReport.stockedItems.length} produtos frequentes da sua despensa:
+                      </span>
                     </div>
-                  ))}
-                </div>
+
+                    <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                      {smartReport.stockedItems.map((item) => (
+                        <div
+                          key={item.canonicalProductId}
+                          className="p-2.5 rounded-lg border border-hairline bg-canvas flex items-center justify-between gap-3 text-[12px]"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <span className="font-medium text-ink">{item.commercialName}</span>
+                            <p className="text-[11px] text-muted">{item.reason}</p>
+                          </div>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleAddSingleSuggestion(item)}
+                            className="text-[11px] h-7 px-2.5 rounded-full"
+                          >
+                            + Adicionar
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
