@@ -1,0 +1,38 @@
+{
+  "name": "predictmarket-pwa",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 10450",
+    "build": "next build",
+    "start": "next start -p 10450",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test src/core/engine/__tests__/GroceryForecastEngine.test.ts src/core/engine/__tests__/PantryReplenishmentEngine.test.ts src/core/ingestion/__tests__/known-receipts.test.ts src/core/ingestion/__tests__/duplicate-ingestion.test.ts src/lib/auth/__tests__/auth.test.ts src/lib/__tests__/dev-logger.test.ts src/lib/__tests__/validation.test.ts src/lib/__tests__/api-client.test.ts src/lib/__tests__/auth-session.test.ts src/data/__tests__/santa-catarina-cities.test.ts src/lib/__tests__/products-catalog.test.ts",
+    "pages:build": "npx @cloudflare/next-on-pages"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "@phosphor-icons/react": "^2.1.7",
+    "bcryptjs": "^3.0.3",
+    "cheerio": "^1.0.0",
+    "html5-qrcode": "^2.3.8",
+    "next": "^15.1.0",
+    "pg": "^8.23.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "resend": "^6.33.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2"
+  }
+}
