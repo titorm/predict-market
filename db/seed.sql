@@ -1,0 +1,84 @@
+INSERT INTO stores (id, cnpj, trade_name, corporate_name, neighborhood, city, state, latitude, longitude)
+VALUES
+    ('a0000000-0000-0000-0000-000000000001', '09313769000101', 'Fort Atacadista', 'Comper Atacado S/A', 'SC-401 (Santo Antônio)', 'Florianópolis', 'SC', -27.502800, -48.514200),
+    ('a0000000-0000-0000-0000-000000000002', '83250364001490', 'Giassi Supermercados', 'Giassi & Cia Ltda', 'Santa Mônica', 'Florianópolis', 'SC', -27.592500, -48.516500),
+    ('a0000000-0000-0000-0000-000000000003', '83568278002277', 'Bistek Supermercados', 'Bistek Alimentos Ltda', 'Costeira do Pirajubaé', 'Florianópolis', 'SC', -27.632100, -48.528000),
+    ('a0000000-0000-0000-0000-000000000004', '83916147000801', 'Supermercados Imperatriz', 'Comercial de Alimentos Imperatriz Ltda', 'Córrego Grande', 'Florianópolis', 'SC', -27.598200, -48.508500),
+    ('a0000000-0000-0000-0000-000000000005', '02831356003310', 'Super Koch', 'Super Koch Hipermercados S/A', 'Centro', 'Florianópolis', 'SC', -27.596000, -48.549000),
+    ('a0000000-0000-0000-0000-000000000006', '83646984001180', 'Angeloni Supermercados', 'A. Angeloni & Cia Ltda', 'Beira-Mar Norte', 'Florianópolis', 'SC', -27.584100, -48.541200)
+ON CONFLICT (cnpj) DO NOTHING;
+
+INSERT INTO canonical_products (id, gtin_ean, commercial_name, brand, category, standard_unit, normalized_name)
+VALUES
+    ('b0000000-0000-0000-0000-000000000001', '7896006711124', 'Arroz Branco Tipo 1 Camil 5kg', 'Camil', 'Mercearia', 'KG', 'arroz branco camil 5kg'),
+    ('b0000000-0000-0000-0000-000000000002', '7896452100015', 'Feijão Preto Tipo 1 Kicaldo 1kg', 'Kicaldo', 'Mercearia', 'KG', 'feijao preto kicaldo 1kg'),
+    ('b0000000-0000-0000-0000-000000000003', '7896051111018', 'Leite UHT Integral Tirol 1L', 'Tirol', 'Laticínios', 'UN', 'leite uht integral tirol 1l'),
+    ('b0000000-0000-0000-0000-000000000004', NULL, 'Banana Prata Granel (Kg)', NULL, 'Hortifrúti', 'KG', 'banana prata'),
+    ('b0000000-0000-0000-0000-000000000005', '7891022100115', 'Detergente Líquido Neutro Ypê 500ml', 'Ypê', 'Limpeza', 'UN', 'detergente ype 500ml'),
+    ('b0000000-0000-0000-0000-000000000006', '7891095000014', 'Café Torrado e Moído Tradicional Pilão 500g', 'Pilão', 'Mercearia', 'UN', 'cafe pilao 500g'),
+    ('b0000000-0000-0000-0000-000000000007', '7896036090017', 'Óleo de Soja Refinado Liza 900ml', 'Liza', 'Mercearia', 'UN', 'oleo de soja liza 900ml'),
+    ('b0000000-0000-0000-0000-000000000008', '7891910000112', 'Açúcar Refinado Especial União 1kg', 'União', 'Mercearia', 'KG', 'acucar uniao 1kg')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO store_product_aliases (store_id, canonical_product_id, raw_description, store_internal_code, confidence_score)
+VALUES
+    ('a0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'ARROZ BCO CAMIL 5KG', '1001', 1.00),
+    ('a0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000001', 'ARR T1 CAMIL 5K FD', '2001', 1.00),
+    ('a0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', 'ARROZ CAMIL POLIDO 5KG', '3001', 1.00),
+    ('a0000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000001', 'ARROZ BRANCO CAMIL 5KG T1', '4001', 1.00),
+    ('a0000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000001', 'ARR BCO T1 CAMIL 5K', '5001', 1.00),
+    ('a0000000-0000-0000-0000-000000000006', 'b0000000-0000-0000-0000-000000000001', 'ARROZ BRANCO CAMIL T1 5KG', '6001', 1.00)
+ON CONFLICT (store_id, raw_description) DO NOTHING;
+
+INSERT INTO users (id, email, password_hash, full_name, city, state, max_distance_km, email_verified)
+VALUES (
+    'd0000000-0000-0000-0000-000000000001',
+    'demo@predictmarket.app',
+    '$2a$10$wK1F5lFqN.w65m6e4l4oYe4sT5fW6yD7u7h8J9k0L1m2N3o4P5q6R',
+    'Consumidor Referência',
+    'Florianópolis',
+    'SC',
+    15.0,
+    true
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO receipts (id, user_id, store_id, access_key, issue_number, series, issued_at, total_amount, net_amount, payment_method)
+VALUES
+    ('e0000000-0000-0000-0000-000000000001', 'd0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', '42260109313769000101650010001234561001234561', '123456', '1', NOW() - INTERVAL '3 days', 85.50, 85.50, 'PIX'),
+    ('e0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000003', '42260183568278002277650010006543211006543212', '654321', '1', NOW() - INTERVAL '2 days', 92.40, 92.40, 'CARTAO_CREDITO'),
+    ('e0000000-0000-0000-0000-000000000003', 'd0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000005', '42260102831356003310650010009876541009876543', '987654', '1', NOW() - INTERVAL '1 day', 88.90, 88.90, 'PIX')
+ON CONFLICT (access_key) DO NOTHING;
+
+INSERT INTO receipt_items (receipt_id, store_id, canonical_product_id, item_index, raw_description, quantity, unit_price, total_price, unit_of_measure, purchased_at)
+VALUES
+    ('e0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 1, 'ARROZ BCO CAMIL 5KG', 1, 26.90, 26.90, 'KG', NOW() - INTERVAL '3 days'),
+    ('e0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002', 2, 'FEIJAO PRETO KICALDO 1KG', 2, 7.49, 14.98, 'KG', NOW() - INTERVAL '3 days'),
+    ('e0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000003', 3, 'LEITE UHT TIROL 1L', 6, 4.39, 26.34, 'UN', NOW() - INTERVAL '3 days'),
+
+    ('e0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', 1, 'ARROZ CAMIL POLIDO 5KG', 1, 28.50, 28.50, 'KG', NOW() - INTERVAL '2 days'),
+    ('e0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000002', 2, 'FEIJAO PRETO KICALDO 1KG', 2, 8.19, 16.38, 'KG', NOW() - INTERVAL '2 days'),
+    ('e0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000003', 3, 'LEITE TIROL INTEGRAL 1L', 6, 4.79, 28.74, 'UN', NOW() - INTERVAL '2 days'),
+
+    ('e0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000001', 1, 'ARR BCO T1 CAMIL 5K', 1, 27.20, 27.20, 'KG', NOW() - INTERVAL '1 day'),
+    ('e0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000002', 2, 'FEIJAO PRETO KICALDO 1KG', 2, 7.89, 15.78, 'KG', NOW() - INTERVAL '1 day'),
+    ('e0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000005', 'b0000000-0000-0000-0000-000000000003', 3, 'LEITE UHT INTEGRAL TIROL', 6, 4.45, 26.70, 'UN', NOW() - INTERVAL '1 day')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO baskets (id, user_id, name, target_cadence_days)
+VALUES (
+    'c0000000-0000-0000-0000-000000000001',
+    'd0000000-0000-0000-0000-000000000001',
+    'Cesta Despensa Familiar Padrão (Florianópolis)',
+    30
+)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO basket_items (basket_id, canonical_product_id, planned_quantity, unit_of_measure)
+VALUES
+    ('c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 2, 'KG'),
+    ('c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002', 3, 'KG'),
+    ('c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000003', 12, 'UN'),
+    ('c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000004', 3.0, 'KG'),
+    ('c0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000005', 4, 'UN')
+ON CONFLICT (basket_id, canonical_product_id) DO NOTHING;
