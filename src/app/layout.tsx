@@ -11,7 +11,10 @@ export const metadata: Metadata = {
     'Motor estatístico de previsão de compras mensais e arbitragem de supermercados via NFC-e.',
   manifest: '/manifest.json',
   icons: {
-    icon: '/icons/icon-192.svg',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml' },
+    ],
     apple: '/icons/icon-192.svg',
   },
 };

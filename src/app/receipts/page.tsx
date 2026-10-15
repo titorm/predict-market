@@ -23,6 +23,7 @@ import { Modal } from '@/components/ui/Modal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { QrScannerViewport } from '@/components/scanner/QrScannerViewport';
 import { ReceiptSummaryDrawer } from '@/components/receipts/ReceiptSummaryDrawer';
+import { PredictMarketLoader } from '@/components/ui/PredictMarketLoader';
 
 interface ReceiptListItem {
   id: string;
@@ -244,11 +245,8 @@ export default function ReceiptsPage() {
         </div>
 
         {isLoading ? (
-          <div className="py-20 text-center space-y-4">
-            <div className="w-10 h-10 border-4 border-hairline border-t-primary rounded-full animate-spin mx-auto" />
-            <p className="text-[15px] font-medium text-ink">
-              Carregando histórico de notas fiscais...
-            </p>
+          <div className="py-20 flex items-center justify-center">
+            <PredictMarketLoader size="lg" text="Carregando histórico de notas fiscais..." />
           </div>
         ) : filteredReceipts.length > 0 ? (
           <div className="space-y-4">

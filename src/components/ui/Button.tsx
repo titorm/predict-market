@@ -1,5 +1,6 @@
 import React from 'react';
 import { CircleNotch } from '@phosphor-icons/react';
+import { PredictMarketLoader } from './PredictMarketLoader';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'tertiary-text' | 'ghost' | 'danger';
@@ -54,7 +55,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {isLoading ? (
           <span className="inline-flex items-center justify-center gap-2 whitespace-nowrap">
-            <CircleNotch size={18} weight="bold" className="animate-spin shrink-0" />
+            <PredictMarketLoader size={18} />
             <span className="inline-flex items-center gap-2 whitespace-nowrap">{children}</span>
           </span>
         ) : (

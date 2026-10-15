@@ -19,6 +19,7 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ProductHistoryDrawer } from '@/components/products/ProductHistoryDrawer';
+import { PredictMarketLoader } from '@/components/ui/PredictMarketLoader';
 
 interface PurchasedProductItem {
   id: string;
@@ -281,9 +282,8 @@ export default function PurchasedProductsPage() {
         </div>
 
         {isLoading ? (
-          <div className="p-16 text-center space-y-3">
-            <div className="w-10 h-10 border-4 border-hairline border-t-primary rounded-full animate-spin mx-auto" />
-            <p className="text-[14px] text-muted">Carregando catálogo de produtos comprados...</p>
+          <div className="p-16 flex items-center justify-center">
+            <PredictMarketLoader size="lg" text="Carregando catálogo de produtos comprados..." />
           </div>
         ) : filteredProducts.length === 0 ? (
           <Card variant="bordered" className="p-12 text-center space-y-4">

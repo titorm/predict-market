@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { List, SignOut } from '@phosphor-icons/react';
 import { useAuth } from '@/context/AuthContext';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { PredictMarketLogo } from '@/components/ui/PredictMarketLogo';
 
 export interface AppHeaderProps {
   onToggleSidebar: () => void;
@@ -28,13 +29,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onToggleSidebar }) => {
               <List size={20} weight="bold" />
             </button>
 
-            <Link href="/dashboard" className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-sm bg-primary flex items-center justify-center text-white font-bold text-sm tracking-tight shrink-0">
-                P
-              </div>
-              <span className="text-[17px] font-semibold tracking-tight text-ink">
-                predictmarket
-              </span>
+            <Link href="/dashboard" className="flex items-center">
+              <PredictMarketLogo size={28} showText={true} />
             </Link>
           </div>
 

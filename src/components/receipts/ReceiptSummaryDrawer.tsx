@@ -18,6 +18,7 @@ import {
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { PredictMarketLoader } from '@/components/ui/PredictMarketLoader';
 
 export interface ReceiptSummaryDrawerProps {
   isOpen: boolean;
@@ -227,9 +228,8 @@ export const ReceiptSummaryDrawer: React.FC<ReceiptSummaryDrawerProps> = ({
 
             <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
               {isLoading ? (
-                <div className="py-20 flex flex-col items-center justify-center space-y-3">
-                  <div className="w-8 h-8 border-3 border-hairline border-t-primary rounded-full animate-spin" />
-                  <p className="text-[13px] text-muted">Carregando resumo da nota fiscal...</p>
+                <div className="py-20 flex flex-col items-center justify-center">
+                  <PredictMarketLoader size="md" text="Carregando resumo da nota fiscal..." />
                 </div>
               ) : !data ? (
                 <div className="py-16 text-center text-[13px] text-muted">

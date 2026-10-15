@@ -16,6 +16,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { PredictMarketLoader } from '@/components/ui/PredictMarketLoader';
 
 interface DashboardStatsData {
   receiptsCount: number;
@@ -122,9 +123,8 @@ export default function DashboardGeneralPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 py-20 text-center space-y-4">
-        <div className="w-10 h-10 border-4 border-hairline border-t-primary rounded-full animate-spin mx-auto" />
-        <p className="text-[14px] font-medium text-muted">Carregando métricas da sua conta...</p>
+      <div className="max-w-[1080px] mx-auto px-4 sm:px-6 py-24 flex items-center justify-center">
+        <PredictMarketLoader size="lg" text="Carregando métricas da sua conta..." />
       </div>
     );
   }

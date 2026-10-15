@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { CheckCircle, WarningCircle, Sparkle, ArrowLeft, Prohibit } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { PredictMarketLoader } from '@/components/ui/PredictMarketLoader';
 
 function ScannerContent() {
   const searchParams = useSearchParams();
@@ -127,8 +128,7 @@ function ScannerContent() {
 
       {status === 'loading' && (
         <Card variant="bordered" className="p-8 text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-hairline border-t-primary rounded-full animate-spin mx-auto" />
-          <p className="text-[16px] font-medium text-ink">{feedbackMessage}</p>
+          <PredictMarketLoader size="lg" text={feedbackMessage} />
           <p className="text-[13px] text-muted">
             Normalizando produtos canônicos e extraindo preços vigentes...
           </p>

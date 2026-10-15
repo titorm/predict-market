@@ -15,6 +15,7 @@ import {
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { ProductPriceChart } from './ProductPriceChart';
+import { PredictMarketLoader } from '@/components/ui/PredictMarketLoader';
 
 export interface ProductHistoryDrawerProps {
   isOpen: boolean;
@@ -208,9 +209,8 @@ export const ProductHistoryDrawer: React.FC<ProductHistoryDrawerProps> = ({
 
           <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
             {isLoading && !product ? (
-              <div className="py-20 text-center space-y-4">
-                <div className="w-10 h-10 border-3 border-hairline border-t-primary rounded-full animate-spin mx-auto" />
-                <p className="text-[14px] text-muted">Carregando histórico e métricas...</p>
+              <div className="py-20 flex flex-col items-center justify-center">
+                <PredictMarketLoader size="lg" text="Carregando histórico e métricas..." />
               </div>
             ) : error ? (
               <Card variant="bordered" className="p-6 text-center space-y-3">

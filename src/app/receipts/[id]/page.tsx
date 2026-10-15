@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/Button';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ProductHistoryDrawer } from '@/components/products/ProductHistoryDrawer';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { PredictMarketLoader } from '@/components/ui/PredictMarketLoader';
 
 interface ReceiptDetail {
   id: string;
@@ -219,13 +220,8 @@ export default function ReceiptDetailPage({
 
   if (isLoading) {
     return (
-      <div className="bg-canvas min-h-screen py-16 px-6">
-        <div className="max-w-[960px] mx-auto text-center space-y-4">
-          <div className="w-10 h-10 border-4 border-hairline border-t-primary rounded-full animate-spin mx-auto" />
-          <p className="text-[15px] font-medium text-ink">
-            Carregando detalhes do cupom fiscal e produtos...
-          </p>
-        </div>
+      <div className="bg-canvas min-h-screen py-24 px-6 flex items-center justify-center">
+        <PredictMarketLoader size="lg" text="Carregando detalhes do cupom fiscal e produtos..." />
       </div>
     );
   }

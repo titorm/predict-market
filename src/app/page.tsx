@@ -22,6 +22,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { PredictMarketLogo } from '@/components/ui/PredictMarketLogo';
 
 interface PublicStats {
   receipts_count: number;
@@ -77,13 +78,8 @@ export default function LandingPage() {
     <div className="bg-canvas text-ink min-h-screen">
       <header className="border-b border-hairline bg-canvas sticky top-0 z-20">
         <div className="max-w-[1280px] mx-auto px-6 h-[72px] flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-sm bg-primary flex items-center justify-center text-white font-bold text-base tracking-tight shrink-0">
-              P
-            </div>
-            <span className="text-[18px] font-semibold tracking-tight text-ink">
-              predictmarket
-            </span>
+          <Link href="/" className="flex items-center">
+            <PredictMarketLogo size={32} showText={true} />
           </Link>
 
           <div className="flex items-center gap-3">

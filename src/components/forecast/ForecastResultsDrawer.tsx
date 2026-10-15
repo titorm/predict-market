@@ -15,6 +15,7 @@ import {
 } from '@phosphor-icons/react';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
+import { PredictMarketLoader } from '@/components/ui/PredictMarketLoader';
 import type {
   BasketForecastReport,
   ItemForecastOutput,
@@ -115,10 +116,7 @@ export const ForecastResultsDrawer: React.FC<ForecastResultsDrawerProps> = ({
           <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
             {isCalculating ? (
               <div className="py-20 flex flex-col items-center justify-center space-y-4 text-center">
-                <div className="w-10 h-10 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
-                <p className="text-[14px] font-semibold text-ink">
-                  Cruzando preços de atacado e varejo...
-                </p>
+                <PredictMarketLoader size="lg" text="Cruzando preços de atacado e varejo..." />
                 <p className="text-[12px] text-muted max-w-xs">
                   Calculando inflação EWMA, penalidade de transporte e arbitragem de lojas em Florianópolis.
                 </p>
