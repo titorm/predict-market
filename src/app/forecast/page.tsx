@@ -25,6 +25,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { useToast } from '@/components/ui/Toast';
 import { ForecastResultsDrawer } from '@/components/forecast/ForecastResultsDrawer';
@@ -542,17 +543,19 @@ export default function ForecastCartPage() {
               <div className="space-y-3 pt-2">
                 {receiptsList.length > 0 ? (
                   <>
-                    <select
+                    <Select
+                      size="sm"
+                      variant="surface"
                       value={selectedReceiptId}
                       onChange={(e) => setSelectedReceiptId(e.target.value)}
-                      className="w-full h-10 px-3 rounded-lg border border-hairline text-[13px] text-ink bg-surface-soft/40 focus:outline-none focus:border-ink"
+                      aria-label="Selecionar Nota Fiscal"
                     >
                       {receiptsList.map((r) => (
                         <option key={r.id} value={r.id}>
                           {getReceiptStoreName(r)} ({formatDate(getReceiptDate(r))}) · {formatBRL(getReceiptAmount(r))}
                         </option>
                       ))}
-                    </select>
+                    </Select>
 
                     <Button
                       variant="primary"

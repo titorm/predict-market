@@ -18,6 +18,7 @@ import {
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { Select } from '@/components/ui/Select';
 import { ProductHistoryDrawer } from '@/components/products/ProductHistoryDrawer';
 import { PredictMarketLoader } from '@/components/ui/PredictMarketLoader';
 
@@ -245,18 +246,21 @@ export default function PurchasedProductsPage() {
               <label htmlFor="sort-select" className="text-[13px] text-muted font-medium">
                 Ordenar por:
               </label>
-              <select
+              <Select
                 id="sort-select"
+                size="sm"
+                variant="default"
+                containerClassName="w-auto min-w-[160px]"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="py-2 px-3 rounded-md border border-hairline bg-canvas text-[13px] font-medium text-ink focus:outline-none focus:border-ink"
+                aria-label="Ordenar por"
               >
                 <option value="recent">Mais Recentes</option>
                 <option value="purchases">Mais Comprados</option>
                 <option value="price-asc">Menor Preço</option>
                 <option value="price-desc">Maior Preço</option>
                 <option value="name">Nome (A-Z)</option>
-              </select>
+              </Select>
             </div>
           </div>
 
