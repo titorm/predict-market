@@ -54,7 +54,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen && window.innerWidth < 768) {
+      if (e.key === 'Escape' && isOpen && window.innerWidth < 1024) {
         onClose();
       }
     };
@@ -66,7 +66,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ isOpen, onClose }) => {
   }, [isOpen, onClose]);
 
   useEffect(() => {
-    if (isOpen && typeof window !== 'undefined' && window.innerWidth < 768) {
+    if (isOpen && typeof window !== 'undefined' && window.innerWidth < 1024) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -82,7 +82,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ isOpen, onClose }) => {
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 top-[56px] bg-ink/30 backdrop-blur-xs z-30 md:hidden transition-opacity duration-200"
+          className="fixed inset-0 bg-ink/30 backdrop-blur-xs z-40 lg:hidden transition-opacity duration-200"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -90,11 +90,23 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ isOpen, onClose }) => {
 
       <aside
         aria-label="Menu Lateral de Navegação"
-        className={`fixed top-[56px] bottom-0 left-0 w-64 bg-canvas border-r border-hairline flex flex-col z-30 transition-transform duration-200 ease-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        className={`fixed top-0 bottom-0 left-0 w-72 lg:w-64 bg-canvas border-r border-hairline flex flex-col z-50 lg:z-30 lg:top-[56px] transition-transform duration-200 ease-out safe-bottom safe-top ${
+          isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <div className="flex items-center justify-between p-4 border-b border-hairline lg:hidden">
+          <span className="font-bold text-[15px] text-ink">Navegação</span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Fechar menu"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-muted hover:text-ink hover:bg-surface-soft transition-colors"
+          >
+            <CaretRight size={20} weight="bold" />
+          </button>
+        </div>
+
+        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto overflow-touch">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive =
@@ -108,15 +120,15 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ isOpen, onClose }) => {
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => window.innerWidth < 768 && onClose()}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-md text-[13px] transition-colors ${
+                onClick={() => window.innerWidth < 1024 && onClose()}
+                className={`flex items-center gap-3 px-3.5 py-3 rounded-lg text-[13px] min-h-[44px] transition-colors ${
                   isActive
                     ? 'bg-surface-soft text-ink font-semibold'
                     : 'text-muted hover:text-ink hover:bg-surface-soft/60 font-medium'
                 }`}
               >
                 <Icon
-                  size={18}
+                  size={20}
                   weight={isActive ? 'bold' : 'regular'}
                   className={isActive ? 'text-primary' : 'text-muted'}
                 />
@@ -129,8 +141,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ isOpen, onClose }) => {
         <div className="p-3 border-t border-hairline space-y-3 shrink-0 bg-canvas">
           <Link
             href="/scanner"
-            onClick={() => window.innerWidth < 768 && onClose()}
-            className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-lg text-[13px] font-semibold bg-primary text-white hover:bg-primary-hover shadow-xs transition-colors"
+            onClick={() => window.innerWidth < 1024 && onClose()}
+            className="flex items-center justify-center gap-2 w-full min-h-[44px] py-2.5 px-3 rounded-lg text-[13px] font-semibold bg-primary text-white hover:bg-primary-hover shadow-xs transition-colors"
           >
             <QrCode size={18} weight="bold" />
             <span>Escanear Nova Nota</span>
@@ -138,16 +150,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ isOpen, onClose }) => {
 
           <Link
             href="/settings"
-            onClick={() => window.innerWidth < 768 && onClose()}
-            className={`flex items-center justify-between gap-2.5 p-2 rounded-lg text-[12px] transition-colors ${
+            onClick={() => window.innerWidth < 1024 && onClose()}
+            className={`flex items-center justify-between gap-2.5 p-2.5 rounded-lg text-[12px] min-h-[44px] transition-colors ${
               isSettingsActive
                 ? 'bg-surface-soft text-ink border border-hairline font-semibold'
                 : 'text-muted hover:text-ink hover:bg-surface-soft/60 border border-transparent'
             }`}
           >
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-full bg-surface-soft text-ink flex items-center justify-center shrink-0 border border-hairline font-bold text-[11px]">
-                {user?.full_name ? user.full_name[0]?.toUpperCase() : <User size={14} weight="bold" />}
+              <div className="w-8 h-8 rounded-full bg-surface-soft text-ink flex items-center justify-center shrink-0 border border-hairline font-bold text-[12px]">
+                {user?.full_name ? user.full_name[0]?.toUpperCase() : <User size={15} weight="bold" />}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-ink truncate leading-tight">
