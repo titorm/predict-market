@@ -98,4 +98,32 @@ describe('Known Receipts Fixture and Registry', () => {
     );
     assert.strictEqual(KOMPRAO_RIO_VERMELHO_RECEIPT.netTotal, 898.7);
   });
+
+  test('deve conter exatamente 10 produtos com consistencia financeira para o Angeloni', async () => {
+    const { ANGELONI_CENTRO_RECEIPT } = await import('../known-receipts.ts');
+    assert.strictEqual(ANGELONI_CENTRO_RECEIPT.items.length, 10);
+    assert.strictEqual(ANGELONI_CENTRO_RECEIPT.store.tradeName, 'Angeloni - Centro (Rua Hoepcke)');
+
+    const sumTotals = ANGELONI_CENTRO_RECEIPT.items.reduce(
+      (acc, item) => acc + item.totalPrice,
+      0
+    );
+    assert.strictEqual(Math.round(sumTotals * 100) / 100, ANGELONI_CENTRO_RECEIPT.grossTotal);
+    assert.strictEqual(ANGELONI_CENTRO_RECEIPT.grossTotal, 75.45);
+    assert.strictEqual(ANGELONI_CENTRO_RECEIPT.netTotal, 75.45);
+  });
+
+  test('deve conter exatamente 12 produtos com consistencia financeira para o Bistek', async () => {
+    const { BISTEK_COSTEIRA_RECEIPT } = await import('../known-receipts.ts');
+    assert.strictEqual(BISTEK_COSTEIRA_RECEIPT.items.length, 12);
+    assert.strictEqual(BISTEK_COSTEIRA_RECEIPT.store.tradeName, 'Bistek Supermercados - Costeira do Pirajubaé');
+
+    const sumTotals = BISTEK_COSTEIRA_RECEIPT.items.reduce(
+      (acc, item) => acc + item.totalPrice,
+      0
+    );
+    assert.strictEqual(Math.round(sumTotals * 100) / 100, BISTEK_COSTEIRA_RECEIPT.grossTotal);
+    assert.strictEqual(BISTEK_COSTEIRA_RECEIPT.grossTotal, 92.25);
+    assert.strictEqual(BISTEK_COSTEIRA_RECEIPT.netTotal, 92.25);
+  });
 });

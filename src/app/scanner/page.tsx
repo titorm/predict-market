@@ -14,7 +14,11 @@ import { PredictMarketLoader } from '@/components/ui/PredictMarketLoader';
 function ScannerContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const initialInput = searchParams.get('sharedInput') ?? searchParams.get('scanned') ?? '';
+  const initialInput =
+    searchParams.get('key') ??
+    searchParams.get('sharedInput') ??
+    searchParams.get('scanned') ??
+    '';
 
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'duplicate' | 'error'>('idle');
   const [feedbackMessage, setFeedbackMessage] = useState<string>('');

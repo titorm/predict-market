@@ -114,8 +114,13 @@ export async function GET(req: NextRequest) {
 
     let products = rows.map((r) => {
       const classification = classifyProductCategorySemantic(r.commercial_name);
-      const resolvedName = classification.normalizedName || r.commercial_name;
-      const resolvedCategory = classification.category;
+      const resolvedName = r.commercial_name.includes('(Cód.')
+        ? r.commercial_name
+        : classification.normalizedName || r.commercial_name;
+      const resolvedCategory =
+        classification.confidence >= 0.75 || !r.category
+          ? classification.category
+          : r.category;
 
       if (r.category !== resolvedCategory || r.commercial_name !== resolvedName) {
         pendingUpdates.push(

@@ -495,17 +495,49 @@ export default function ReceiptDetailPage({
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 border-hairline bg-surface-soft text-[14px] font-bold text-ink">
-                    <td colSpan={4} className="py-4 px-4">
-                      Total ({filteredItems.length} itens listados)
-                    </td>
-                    <td colSpan={2} className="py-4 px-4 text-right text-primary">
-                      {formatBRL(filteredItems.reduce((acc, i) => acc + i.discountValue, 0))}
-                    </td>
-                    <td className="py-4 px-4 text-right text-[16px] tabular-nums">
-                      {formatBRL(filteredItems.reduce((acc, i) => acc + i.totalPrice, 0))}
-                    </td>
-                  </tr>
+                  {(() => {
+                    const sumTotals = filteredItems.reduce((acc, i) => acc + i.totalPrice, 0);
+                    const sumItemDiscounts = filteredItems.reduce((acc, i) => acc + i.discountValue, 0);
+                    const effectiveDiscount =
+                      sumItemDiscounts > 0 ? sumItemDiscounts : receipt.discountAmount;
+                    const effectiveNet = Number((sumTotals - effectiveDiscount).toFixed(2));
+
+                    return (
+                      <>
+                        {effectiveDiscount > 0 && (
+                          <tr className="border-t-2 border-hairline bg-surface-soft/60 text-[13px] text-muted">
+                            <td colSpan={5} className="py-2.5 px-4 font-medium">
+                              Subtotal dos produtos ({filteredItems.length} itens)
+                            </td>
+                            <td colSpan={2} className="py-2.5 px-4 text-right tabular-nums font-semibold text-ink">
+                              {formatBRL(sumTotals)}
+                            </td>
+                          </tr>
+                        )}
+                        {effectiveDiscount > 0 && (
+                          <tr className="border-t border-hairline/60 bg-surface-soft/60 text-[13px] text-primary">
+                            <td colSpan={5} className="py-2.5 px-4 font-medium">
+                              Desconto aplicado na nota
+                            </td>
+                            <td colSpan={2} className="py-2.5 px-4 text-right tabular-nums font-semibold">
+                              - {formatBRL(effectiveDiscount)}
+                            </td>
+                          </tr>
+                        )}
+                        <tr className="border-t-2 border-hairline bg-surface-soft text-[14px] font-bold text-ink">
+                          <td colSpan={4} className="py-4 px-4">
+                            Total Pago ({filteredItems.length} {filteredItems.length === 1 ? 'item' : 'itens'})
+                          </td>
+                          <td colSpan={2} className="py-4 px-4 text-right text-primary">
+                            {effectiveDiscount > 0 ? `- ${formatBRL(effectiveDiscount)}` : '—'}
+                          </td>
+                          <td className="py-4 px-4 text-right text-[16px] tabular-nums">
+                            {formatBRL(effectiveNet > 0 ? effectiveNet : sumTotals)}
+                          </td>
+                        </tr>
+                      </>
+                    );
+                  })()}
                 </tfoot>
               </table>
             </div>

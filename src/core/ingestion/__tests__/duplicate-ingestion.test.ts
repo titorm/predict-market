@@ -56,7 +56,7 @@ describe('Duplicate Receipt Access Key Validation and Ingestion Blocking', () =>
     assert.strictEqual(gatewayErr.statusCode, 502);
   });
 
-  test('deve processar e sintetizar qualquer chave valida de 44 digitos com consistencia financeira', () => {
+  test('deve validar qualquer chave valida de 44 digitos com consistencia estrutural', () => {
     const rawKey = '4226 1009 4776 5200 0109 6500 1000 0889 9112 3456 7890';
     const key = extractAccessKey(rawKey);
     assert.ok(key);

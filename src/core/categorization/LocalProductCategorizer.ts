@@ -93,7 +93,7 @@ const COMPOUND_PRIORITY_RULES: readonly CompoundRule[] = [
     scoreBoost: 22,
   },
   {
-    pattern: /\b(agua\s+sanitaria|agua\s+destilada|limpa\s+vidro|limpa\s+piso|limpa\s+forno|multi\s*uso| tira\s+manchas|ap\s+sanit|aparelho\s+sanitario|pedra\s+sanitaria|saco\s+de?\s*lixo)\b/,
+    pattern: /\b(agua\s+sanitaria|agua\s+destilada|limpa\s+vidro|limpa\s+piso|limpa\s+forno|multi\s*uso|tira\s+manchas|ap\s+sanit|aparelho\s+sanitario|pedra\s+sanitaria|saco\s+de?\s*lixo|saco\s+p\s*lixo|saco\s+plixo)\b/,
     category: 'Limpeza',
     scoreBoost: 25,
   },
@@ -103,27 +103,27 @@ const COMPOUND_PRIORITY_RULES: readonly CompoundRule[] = [
     scoreBoost: 25,
   },
   {
-    pattern: /\b(agua\s+mineral|agua\s+m\b|agua\s+min\b|agua\s+c\s*gas|agua\s+s\s*gas|agua\s+de?\s*coco|beb\s+lactea|bebida\s+lactea|beb\s+energ|bebida\s+energetica|cha\s+gelado|ice\s+tea)\b/,
+    pattern: /\b(agua\s+mineral|agua\s+saborizada|agua\s+m\b|agua\s+min\b|agua\s+c\s*gas|agua\s+s\s*gas|agua\s+de?\s*coco|beb\s+lactea|bebida\s+lactea|beb\s+energ|bebida\s+energetica|beb\s+prot|bebida\s+proteica|cha\s+gelado|ice\s+tea)\b/,
     category: 'Bebidas',
     scoreBoost: 24,
   },
   {
-    pattern: /\b(batata\s+palha|milho\s+pipoca|milho\s+verde|ervilha\s+lata|atum\s+ralado|sardinha\s+lata|caldo\s+knorr|caldo\s+maggi|caldo\s+de?\s*galinha|caldo\s+de?\s*carne|tempero\s+fit|erva\s+doce)\b/,
+    pattern: /\b(batata\s+palha|milho\s+pipoca|milho\s+verde|ervilha\s+lata|atum\s+ralado|sardinha\s+lata|caldo\s+knorr|caldo\s+maggi|caldo\s+de?\s*galinha|caldo\s+de?\s*carne|tempero\s+fit|erva\s+doce|cebola\s+em\s+po|cebola\s+po\b|alho\s+em\s+po|alho\s+po\b|salg\s+long|long\s+crisps)\b/,
     category: 'Mercearia',
-    scoreBoost: 22,
+    scoreBoost: 24,
   },
   {
-    pattern: /\b(pao\s+de\s+queijo|pao\s+de\s+qj|pao\s+frances|pao\s+de\s+forma|pao\s+integral|bolo\s+pronto|rap\s*10|massa\s+para\s+wrap)\b/,
+    pattern: /\b(pao\s+de\s+queijo|pao\s+de\s+qj|pao\s+frances|pao\s+de\s+forma|pao\s+de\s+milho|pao\s+integral|bolo\s+pronto|rap\s*10|massa\s+para\s+wrap)\b/,
     category: 'Padaria',
-    scoreBoost: 20,
+    scoreBoost: 24,
   },
   {
-    pattern: /\b(peito\s+de?\s*frango|peito\s+fgo|coracao\s+de?\s*frango|coracao\s+fgo|coxinha\s+da?\s*asa|moela\s+de?\s*frango|carne\s+moida|nuggets|empanado|linguica|ling\s+cal|ling\s+fgo|ling\s+seara|ling\s+copacol)\b/,
+    pattern: /\b(peito\s+de?\s*frango|peito\s+fgo|coracao\s+de?\s*frango|coracao\s+fgo|coxinha\s+da?\s*asa|moela\s+de?\s*frango|carne\s+moida|nuggets|empanado|linguica|ling\s+cal|ling\s+fgo|ling\s+seara|ling\s+copacol|lombo\s+canadense)\b/,
     category: 'Açougue',
     scoreBoost: 24,
   },
   {
-    pattern: /\b(creme\s+de\s+leite|cr\s+leite|leite\s+condensado|l\s*cond|requeijao|req\s+tirol|queijo\s+minas|queijo\s+mussarela|queijo\s+prato|iogurte|iog\s+nestle|manteiga\s+com\s+sal|manteiga\s+sem\s+sal|manteiga\s+extra|manteiga\s+lac|manteiga\s+batavo)\b/,
+    pattern: /\b(creme\s+de\s+leite|cr\s+leite|leite\s+condensado|l\s*cond|requeijao|req\s+tirol|queijo\s+minas|queijo\s+mussarela|queijo\s+prato|queijo\s+processado|polenguinho|iogurte|iog\s+nestle|manteiga\s+com\s+sal|manteiga\s+sem\s+sal|manteiga\s+extra|manteiga\s+lac|manteiga\s+batavo)\b/,
     category: 'Laticínios',
     scoreBoost: 22,
   },
@@ -131,22 +131,22 @@ const COMPOUND_PRIORITY_RULES: readonly CompoundRule[] = [
 
 const TOKEN_WEIGHT_RULES: readonly TokenWeightRule[] = [
   {
-    pattern: /^(arroz|feijao|macarrao|massa|espaguete|farinha|far|fuba|polvilho|acucar|cafe|achocolatado|achoc|oleo|azeite|vinagre|maionese|ketchup|mostarda|molho|sal|tempero|alecrim|oregano|canela|pimenta|caldo|biscoito|bisc|wafer|chocolate|choc|bala|pacoca|doce|gelatina|pipoca|aveia|granola|mel|cereal|ovos|ovo)$/,
+    pattern: /^(arroz|feijao|macarrao|massa|espaguete|farinha|far|fuba|polvilho|acucar|cafe|achocolatado|achoc|oleo|azeite|vinagre|maionese|ketchup|mostarda|molho|sal|tempero|alecrim|oregano|canela|pimenta|caldo|biscoito|bisc|wafer|chocolate|choc|bala|pacoca|doce|gelatina|pipoca|aveia|granola|mel|cereal|ovos|ovo|salgadinho|salg|crisps|chips)$/,
     category: 'Mercearia',
     weight: 6,
   },
   {
-    pattern: /^(leite|queijo|manteiga|margarina|iogurte|iog|requeijao|req|nata|ricota|coalhada|chantilly)$/,
+    pattern: /^(leite|queijo|manteiga|margarina|iogurte|iog|requeijao|req|nata|ricota|coalhada|chantilly|polenguinho)$/,
     category: 'Laticínios',
     weight: 6,
   },
   {
-    pattern: /^(carne|frango|fgo|bovina|bovino|suina|suino|peito|alcatra|patinho|acem|costela|picanha|contrafile|maminha|fraldinha|linguica|ling|salsicha|bacon|presunto|mortadela|salame|peixe|tilapia|salmao|camarao|moela|coracao|nuggets|empanado|hamburguer)$/,
+    pattern: /^(carne|frango|fgo|bovina|bovino|suina|suino|peito|alcatra|patinho|acem|costela|picanha|contrafile|maminha|fraldinha|linguica|ling|lombo|salsicha|bacon|presunto|mortadela|salame|peixe|tilapia|salmao|camarao|moela|coracao|nuggets|empanado|hamburguer)$/,
     category: 'Açougue',
     weight: 6,
   },
   {
-    pattern: /^(banana|maca|laranja|limao|mamao|melancia|melao|uva|morango|abacaxi|manga|pera|kiwi|abacate|tomate|batata|cebola|alho|cenoura|beterraba|abobrinha|chuchu|pepino|pimentao|mandioca|aipim|alface|rucula|agriao|couve|brocolis|repolho|espinafre|cheiro|salsinha|cebolinha|coentro|hortifruti)$/,
+    pattern: /^(banana|maca|laranja|limao|mamao|melancia|melao|uva|morango|abacaxi|manga|pera|kiwi|abacate|pessego|bergamota|tangerina|mexerica|moranga|abobora|kabotia|tomate|batata|cebola|alho|cenoura|beterraba|abobrinha|chuchu|pepino|pimentao|mandioca|aipim|alface|rucula|agriao|couve|brocolis|repolho|espinafre|cheiro|salsinha|cebolinha|coentro|hortifruti)$/,
     category: 'Hortifrúti',
     weight: 6,
   },
@@ -161,7 +161,7 @@ const TOKEN_WEIGHT_RULES: readonly TokenWeightRule[] = [
     weight: 6,
   },
   {
-    pattern: /^(detergente|deterg|det|sabao|amaciante|desinfetante|desengordurante|deseng|alvejante|cloro|sanitaria|esponja|la|vassoura|rodo|pano|lustra|cera|inseticida|naftalina|desoflor)$/,
+    pattern: /^(detergente|deterg|det|sabao|amaciante|desinfetante|desengordurante|deseng|alvejante|cloro|sanitaria|esponja|la|vassoura|rodo|pano|lustra|cera|inseticida|naftalina|desoflor|plixo)$/,
     category: 'Limpeza',
     weight: 6,
   },

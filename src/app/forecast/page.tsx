@@ -250,7 +250,8 @@ export default function ForecastCartPage() {
       prev
         .map((i) => {
           if (i.canonicalProductId === canonicalProductId) {
-            const newQty = Math.max(1, i.quantity + delta);
+            const step = i.unit === 'KG' ? (delta > 0 ? 0.1 : -0.1) : delta;
+            const newQty = Math.max(0.001, Number((i.quantity + step).toFixed(3)));
             return { ...i, quantity: newQty };
           }
           return i;
@@ -300,7 +301,8 @@ export default function ForecastCartPage() {
           'Nota Fiscal';
 
         const rawItems = data.items || [];
-        const newItems: CartItem[] = [];
+        const itemsMap = new Map<string, CartItem>();
+
         for (const item of rawItems) {
           const canonicalId = item.canonicalProductId || item.canonical_product_id;
           if (!canonicalId) continue;
@@ -317,19 +319,32 @@ export default function ForecastCartPage() {
             item.unitOfMeasure ||
             item.unit_of_measure ||
             'UN';
-          const quantity = Math.max(1, Math.round(Number(item.quantity) || 1));
+          const qty = Math.max(0.001, Number((Number(item.quantity) || 1).toFixed(3)));
           const price = Number(item.unitPrice ?? item.unit_price) || 15.0;
 
-          newItems.push({
-            canonicalProductId: canonicalId,
-            name,
-            category,
-            unit,
-            quantity,
-            estimatedUnitPrice: price,
-            origin: `Nota ${storeName}`,
-          });
+          const existing = itemsMap.get(canonicalId);
+          if (existing) {
+            const combinedQty = Number((existing.quantity + qty).toFixed(3));
+            const weightedPrice =
+              combinedQty > 0
+                ? (existing.quantity * existing.estimatedUnitPrice + qty * price) / combinedQty
+                : price;
+            existing.quantity = combinedQty;
+            existing.estimatedUnitPrice = Math.round(weightedPrice * 100) / 100;
+          } else {
+            itemsMap.set(canonicalId, {
+              canonicalProductId: canonicalId,
+              name,
+              category,
+              unit,
+              quantity: qty,
+              estimatedUnitPrice: price,
+              origin: `Nota ${storeName}`,
+            });
+          }
         }
+
+        const newItems = Array.from(itemsMap.values());
 
         queueMicrotask(() => {
           setCartItems(newItems);
@@ -938,8 +953,8 @@ export default function ForecastCartPage() {
                       >
                         <Minus size={12} weight="bold" />
                       </button>
-                      <span className="w-8 text-center font-bold text-ink tabular-nums text-[13px]">
-                        {item.quantity}
+                      <span className="min-w-[34px] px-1 text-center font-bold text-ink tabular-nums text-[12px]">
+                        {Number(item.quantity.toFixed(3))}
                       </span>
                       <button
                         type="button"

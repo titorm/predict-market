@@ -2,6 +2,7 @@ import * as cheerio from 'cheerio';
 import { db } from '@/lib/db';
 import {
   classifyProductCategory,
+  classifyProductCategorySemantic,
   cleanFiscalProductName,
 } from '@/core/categorization/LocalProductCategorizer';
 import { findKnownReceipt, KnownReceiptFixture } from './known-receipts';
@@ -18,6 +19,10 @@ export interface SefazScrapedItem {
   qCom: number;
   vUnCom: number;
   vDesc: number;
+  vProd?: number;
+  commercialName?: string;
+  category?: string;
+  standardUnit?: 'KG' | 'L' | 'UN';
 }
 
 export interface SefazScrapedReceipt {
@@ -49,10 +54,35 @@ interface MatchProductResult {
   confidence: number;
 }
 
-interface OpenAiEmbeddingResponse {
-  data: Array<{
-    embedding: number[];
-  }>;
+interface ExistingReceiptCheckRow {
+  id: string;
+  net_amount: string | number;
+  trade_name: string | null;
+  corporate_name: string | null;
+}
+
+interface CdpTargetInfo {
+  id: string;
+  type: string;
+  url: string;
+  webSocketDebuggerUrl?: string;
+}
+
+interface CdpMessagePayload {
+  id?: number;
+  result?: {
+    result?: {
+      value?: unknown;
+    };
+  };
+}
+
+interface CdpEvalStatus {
+  href?: string;
+  hasTabResult?: boolean;
+  hasVerifyBtn?: boolean;
+  turnstileResponse?: string;
+  clicked?: boolean;
 }
 
 export class NfceIngestionService {
@@ -68,11 +98,21 @@ export class NfceIngestionService {
   ): Promise<{ receiptId: string; itemsProcessed: number; isDuplicate: boolean }> {
     const accessKey = this.extractAccessKey(rawInputUrlOrKey);
     if (!accessKey) {
-      throw new SefazIngestionError('Chave de acesso de 44 dígitos inválida ou ausente no QR Code.', 400);
+      throw new SefazIngestionError(
+        'Chave de acesso de 44 dígitos inválida ou ausente no QR Code.',
+        400
+      );
     }
 
-    const existingReceipt = await db.queryOne<{ id: string }>(
-      'SELECT id FROM receipts WHERE access_key = $1',
+    const knownFixture = findKnownReceipt(accessKey);
+
+    const existingReceipt = await db.queryOne<ExistingReceiptCheckRow>(
+      `
+      SELECT r.id, r.net_amount, s.trade_name, s.corporate_name
+      FROM receipts r
+      LEFT JOIN stores s ON s.id = r.store_id
+      WHERE r.access_key = $1
+      `,
       [accessKey]
     );
 
@@ -82,9 +122,24 @@ export class NfceIngestionService {
         [existingReceipt.id]
       );
       const parsedCount = parseInt(itemsCount?.count ?? '0', 10);
-      if (parsedCount > 0) {
-        return { receiptId: existingReceipt.id, itemsProcessed: parsedCount, isDuplicate: true };
+
+      const isSynthesizedStore =
+        (existingReceipt.trade_name ?? '').startsWith('Supermercado Regional') ||
+        existingReceipt.corporate_name === 'COMERCIO VAREJISTA DE ALIMENTOS LTDA';
+
+      const isKnownMismatch =
+        knownFixture !== null &&
+        (parsedCount !== knownFixture.items.length ||
+          Math.abs(Number(existingReceipt.net_amount) - knownFixture.netTotal) > 0.01);
+
+      if (parsedCount > 0 && !isSynthesizedStore && !isKnownMismatch) {
+        return {
+          receiptId: existingReceipt.id,
+          itemsProcessed: parsedCount,
+          isDuplicate: true,
+        };
       }
+
       await db.query('DELETE FROM receipts WHERE id = $1', [existingReceipt.id]);
     }
 
@@ -94,6 +149,10 @@ export class NfceIngestionService {
 
     const parsedReceipt = await this.scrapeSefazPortal(targetUrl, accessKey);
     const storeId = await this.upsertStore(parsedReceipt);
+
+    const netAmount = Number(
+      (parsedReceipt.totalGross - parsedReceipt.totalDiscount).toFixed(2)
+    );
 
     const createdReceipt = await db.queryOne<{ id: string }>(
       `
@@ -113,7 +172,7 @@ export class NfceIngestionService {
         parsedReceipt.issuedAt,
         parsedReceipt.totalGross,
         parsedReceipt.totalDiscount,
-        Number((parsedReceipt.totalGross - parsedReceipt.totalDiscount).toFixed(2)),
+        netAmount,
         parsedReceipt.paymentMethod ?? 'Cartão',
         JSON.stringify({ sefazUrl: parsedReceipt.sefazUrl }),
       ]
@@ -127,7 +186,10 @@ export class NfceIngestionService {
     let itemIndex = 1;
     for (const item of parsedReceipt.items) {
       const canonicalProductId = await this.resolveOrCreateProduct(storeId, item);
-      const totalItemPrice = Number((item.qCom * item.vUnCom - item.vDesc).toFixed(2));
+      const totalItemPrice =
+        typeof item.vProd === 'number' && item.vProd > 0
+          ? Number(item.vProd.toFixed(2))
+          : Number((item.qCom * item.vUnCom - item.vDesc).toFixed(2));
 
       await db.query(
         `
@@ -177,7 +239,10 @@ export class NfceIngestionService {
     return ufEndpoints[ufCode] ?? `https://sat.sef.sc.gov.br/nfce/consulta?p=${accessKey}`;
   }
 
-  private fixtureToSefazReceipt(fixture: KnownReceiptFixture, targetUrl: string): SefazScrapedReceipt {
+  private fixtureToSefazReceipt(
+    fixture: KnownReceiptFixture,
+    targetUrl: string
+  ): SefazScrapedReceipt {
     return {
       accessKey: fixture.accessKey,
       sefazUrl: targetUrl,
@@ -206,6 +271,10 @@ export class NfceIngestionService {
         qCom: item.quantity,
         vUnCom: item.unitPrice,
         vDesc: item.discountValue,
+        vProd: item.totalPrice,
+        commercialName: item.commercialName,
+        category: item.category,
+        standardUnit: item.standardUnit,
       })),
     };
   }
@@ -224,192 +293,420 @@ export class NfceIngestionService {
     return null;
   }
 
-  private synthesizeReceiptFromAccessKey(accessKey: string, url: string): SefazScrapedReceipt {
-    const ufCode = accessKey.substring(0, 2);
-    const yearDigits = parseInt(accessKey.substring(2, 4), 10);
-    const month = parseInt(accessKey.substring(4, 6), 10);
-    const year = 2000 + (isNaN(yearDigits) ? 26 : yearDigits);
-    const safeMonth = Math.min(12, Math.max(1, isNaN(month) ? 10 : month));
-    const cnpj = accessKey.substring(6, 20);
-    const series = accessKey.substring(22, 25);
-    const number = parseInt(accessKey.substring(25, 34), 10).toString();
+  private parseBrDecimal(raw: string): number {
+    const cleaned = raw.trim();
+    if (!cleaned) return 0;
+    const normalized = cleaned.includes(',')
+      ? cleaned.replace(/\./g, '').replace(',', '.')
+      : cleaned;
+    const val = parseFloat(normalized);
+    return Number.isFinite(val) ? val : 0;
+  }
 
-    const chainMap: Record<string, { tradeName: string; corporateName: string }> = {
-      '02831172': { tradeName: 'Komprão Koch Atacadista', corporateName: 'KOCH HIPERMERCADO S/A' },
-      '75315333': { tradeName: 'Atacadão', corporateName: 'ATACADAO S.A.' },
-      '09477652': { tradeName: 'Fort Atacadista', corporateName: 'SDB COMERCIO DE ALIMENTOS LTDA' },
-      '06057223': { tradeName: 'Bistek Supermercados', corporateName: 'BISTEK SUPERMERCADOS LTDA' },
-      '82640532': { tradeName: 'Supermercados Imperatriz', corporateName: 'CIA ZAFFARI COMERCIO E INDUSTRIA' },
-      '93209765': { tradeName: 'Angeloni Supermercados', corporateName: 'A. ANGELONI & CIA LTDA' },
-      '45543915': { tradeName: 'Carrefour Hipermercado', corporateName: 'CARREFOUR COMERCIO E INDUSTRIA LTDA' },
-    };
-
+  private resolveKnownTradeName(cnpj: string, legalName: string, neighborhood?: string): string {
     const rootCnpj = cnpj.substring(0, 8);
-    const storeInfo = chainMap[rootCnpj] ?? {
-      tradeName: `Supermercado Regional ${ufCode === '42' ? 'SC' : 'Brasil'}`,
-      corporateName: 'COMERCIO VAREJISTA DE ALIMENTOS LTDA',
+    const chainMap: Record<string, string> = {
+      '83646984': 'Angeloni',
+      '93209765': 'Angeloni',
+      '83261420': 'Bistek Supermercados',
+      '06057223': 'Bistek Supermercados',
+      '02831172': 'Komprão Koch Atacadista',
+      '75315333': 'Atacadão',
+      '09477652': 'Fort Atacadista',
+      '82640532': 'Supermercados Imperatriz',
+      '45543915': 'Carrefour Hipermercado',
     };
-
-    const catalogPool = [
-      { name: 'ARROZ TIO JOAO BRANCO PC 5kg', unit: 'UN', price: 34.90, category: 'Mercearia' },
-      { name: 'FEIJAO URBANO PRETO T1 PC 1kg', unit: 'UN', price: 7.89, category: 'Mercearia' },
-      { name: 'LEITE INTEGRAL PIRACANJUBA 1L', unit: 'UN', price: 5.49, category: 'Laticínios' },
-      { name: 'CAFE PILAO TRADICIONAL 500G', unit: 'UN', price: 18.90, category: 'Mercearia' },
-      { name: 'OLEO DE SOJA SOYA PET 900ML', unit: 'UN', price: 6.99, category: 'Mercearia' },
-      { name: 'ACUCAR REFINADO UNIAO 1kg', unit: 'UN', price: 4.79, category: 'Mercearia' },
-      { name: 'MACARRAO ESPAGUETE BARILLA 500G', unit: 'UN', price: 8.90, category: 'Massas' },
-      { name: 'MOLHO TOMATE POMAROLA SACHE 300G', unit: 'UN', price: 3.89, category: 'Molhos e Condimentos' },
-      { name: 'OVOS BRANCOS GRANDES C/ 30', unit: 'UN', price: 24.90, category: 'Ovos' },
-      { name: 'MANTEIGA COM SAL LELO POTE 200G', unit: 'UN', price: 11.90, category: 'Laticínios' },
-      { name: 'QUEIJO MUSSARELA FATIADO 200G', unit: 'UN', price: 12.50, category: 'Laticínios' },
-      { name: 'PEITO DE FRANGO CONGELADO 1kg', unit: 'KG', price: 18.90, category: 'Açougue' },
-      { name: 'CARNE MOIDA BOVINA DE PRIMEIRA 1kg', unit: 'KG', price: 36.90, category: 'Açougue' },
-      { name: 'MACA FUJI kg', unit: 'KG', price: 8.99, category: 'Hortifrúti' },
-      { name: 'BANANA PRATA kg', unit: 'KG', price: 6.49, category: 'Hortifrúti' },
-      { name: 'TOMATE ITALIANO kg', unit: 'KG', price: 7.99, category: 'Hortifrúti' },
-      { name: 'PAO FRANCES TRADICIONAL kg', unit: 'KG', price: 14.90, category: 'Padaria' },
-      { name: 'DETERGENTE LIQUIDO YPE 500ML', unit: 'UN', price: 2.49, category: 'Limpeza' },
-      { name: 'SABAO EM PO OMO LAVAGEM PERFEITA 1.6kg', unit: 'UN', price: 23.90, category: 'Limpeza' },
-      { name: 'DESINFETANTE PINHO SOL 1L', unit: 'UN', price: 11.90, category: 'Limpeza' },
-      { name: 'PAPEL HIGIENICO NEVE C/ 12', unit: 'UN', price: 21.90, category: 'Limpeza' },
-      { name: 'CREME DENTAL COLGATE TOTAL 12 90G', unit: 'UN', price: 7.90, category: 'Higiene' },
-    ];
-
-    let seed = 0;
-    for (let i = 0; i < accessKey.length; i++) {
-      seed = (seed * 31 + accessKey.charCodeAt(i)) >>> 0;
+    const baseName = chainMap[rootCnpj] ?? legalName;
+    if (neighborhood && !baseName.toLowerCase().includes(neighborhood.toLowerCase())) {
+      return `${baseName} - ${neighborhood}`;
     }
+    return baseName;
+  }
 
-    const itemCount = 8 + (seed % 10);
+  public parseSefazHtml(
+    rawHtml: string,
+    accessKey: string,
+    url: string
+  ): SefazScrapedReceipt | null {
+    const embeddedHtml = this.extractEmbeddedHtml(rawHtml);
+    const effectiveHtml = embeddedHtml ?? rawHtml;
+    const $ = cheerio.load(effectiveHtml);
+
     const items: SefazScrapedItem[] = [];
+    $('table#tabResult tr[id^="Item"]').each((_, el) => {
+      const xProd = $(el).find('.txtTit, .txtTit2').first().text().trim();
+      if (!xProd) return;
 
-    for (let i = 0; i < itemCount; i++) {
-      const prodIdx = (seed + i * 7) % catalogPool.length;
-      const prod = catalogPool[prodIdx];
-      const qty = 1 + ((seed + i) % 3);
-      const unitPrice = prod.price;
-      const discount = (seed + i) % 5 === 0 ? Number((unitPrice * 0.1).toFixed(2)) : 0;
+      const codeText = $(el).find('.RCod').text();
+      const cProdMatch = codeText.match(/C[óo]digo:\s*([A-Za-z0-9_-]+)/i);
+      const eanMatch = codeText.match(/EAN:\s*([0-9]{8,14})/i);
+
+      const rqText = $(el).find('.Rqtd').text().trim();
+      const qMatch = rqText.match(/([\d.,]+)\s*$/);
+      const qCom = qMatch ? this.parseBrDecimal(qMatch[1]) : 1;
+
+      const uComText =
+        $(el)
+          .find('.RUN')
+          .text()
+          .replace(/UN:\s*/i, '')
+          .trim() || 'UN';
+
+      const rvText = $(el).find('.RvlUnit').text().trim();
+      const vUnMatch = rvText.match(/([\d.,]+)\s*$/);
+      const vUnCom = vUnMatch ? this.parseBrDecimal(vUnMatch[1]) : 0;
+
+      const rdText = $(el).find('.RvlDesc').text().trim();
+      const vDescMatch = rdText.match(/([\d.,]+)\s*$/);
+      const vDesc = vDescMatch ? this.parseBrDecimal(vDescMatch[1]) : 0;
+
+      const valorText = $(el).find('.valor').first().text().trim();
+      const vProdParsed = this.parseBrDecimal(valorText);
+      const vProd =
+        vProdParsed > 0
+          ? Number(vProdParsed.toFixed(2))
+          : Number((qCom * vUnCom - vDesc).toFixed(2));
+
+      const semantic = classifyProductCategorySemantic(xProd);
+      const normalizedUnit = uComText.substring(0, 10).toUpperCase();
 
       items.push({
-        cProd: String(10000 + prodIdx),
-        xProd: prod.name,
-        cEAN: 'SEM GTIN',
-        uCom: prod.unit,
-        qCom: qty,
-        vUnCom: unitPrice,
-        vDesc: discount,
+        cProd: cProdMatch ? cProdMatch[1] : xProd.substring(0, 12),
+        xProd,
+        cEAN: eanMatch ? eanMatch[1] : 'SEM GTIN',
+        uCom: normalizedUnit,
+        qCom: Math.max(0.001, qCom),
+        vUnCom: Math.max(0.01, vUnCom),
+        vDesc: Math.max(0, vDesc),
+        vProd,
+        commercialName: semantic.normalizedName || this.sanitizeFiscalDescription(xProd),
+        category: semantic.category,
+        standardUnit: this.inferBaseUnit(normalizedUnit, xProd),
       });
+    });
+
+    if (items.length === 0) {
+      return null;
     }
 
-    const totalGross = items.reduce((acc, it) => acc + it.qCom * it.vUnCom, 0);
-    const totalDiscount = items.reduce((acc, it) => acc + it.vDesc, 0);
-    const dateStr = `${year}-${String(safeMonth).padStart(2, '0')}-10T14:30:00-03:00`;
+    const legalName =
+      $('#u20, .txtTopo').first().text().trim() || 'Estabelecimento Comercial NFC-e';
+
+    const textBlocks: string[] = [];
+    $('#conteudo .txtCenter .text, div.text').each((_, el) => {
+      const t = $(el).text().replace(/\s+/g, ' ').trim();
+      if (t) textBlocks.push(t);
+    });
+
+    const cnpjRaw = textBlocks.find((b) => b.includes('CNPJ')) ?? effectiveHtml;
+    const cnpjMatch = cnpjRaw.match(/(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2})/);
+    const cnpjStore = cnpjMatch
+      ? cnpjMatch[1].replace(/\D/g, '')
+      : accessKey.substring(6, 20);
+
+    let street: string | undefined;
+    let number: string | undefined;
+    let neighborhood: string | undefined;
+    let city = 'Florianópolis';
+    let state = 'SC';
+
+    const addressBlock = textBlocks.find((b) => !b.includes('CNPJ') && b.includes(','));
+    if (addressBlock) {
+      const parts = addressBlock
+        .split(',')
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0);
+      if (parts.length >= 2) {
+        street = parts[0];
+        number = parts[1];
+      }
+      if (parts.length >= 5) {
+        const maybeState = parts[parts.length - 1];
+        const maybeCity = parts[parts.length - 2];
+        const maybeNeighborhood = parts[parts.length - 3];
+        if (/^[A-Z]{2}$/i.test(maybeState)) {
+          state = maybeState.toUpperCase();
+        }
+        if (maybeCity) {
+          city = maybeCity
+            .toLowerCase()
+            .replace(/(?:^|\s)\S/g, (c) => c.toUpperCase());
+          if (city.toLowerCase() === 'florianopolis') {
+            city = 'Florianópolis';
+          }
+        }
+        if (maybeNeighborhood) {
+          neighborhood = maybeNeighborhood
+            .toLowerCase()
+            .replace(/(?:^|\s)\S/g, (c) => c.toUpperCase());
+        }
+      }
+    }
+
+    let grossFromDom = 0;
+    let discountFromDom = 0;
+    let netFromDom = 0;
+    let paymentMethod = 'Cartão';
+
+    $('#totalNota #linhaTotal').each((_, el) => {
+      const label = $(el).find('label').first().text().replace(/\s+/g, ' ').trim();
+      const valText = $(el).find('.totalNumb').first().text().trim();
+      const val = this.parseBrDecimal(valText);
+
+      if (/Valor total R\$/i.test(label)) {
+        grossFromDom = val;
+      } else if (/Descontos R\$/i.test(label)) {
+        discountFromDom = val;
+      } else if (/Valor a pagar R\$/i.test(label)) {
+        netFromDom = val;
+      } else if (
+        /Cart[ãa]o|Dinheiro|Pix|Aliment|D[ée]bito|Cr[ée]dito/i.test(label)
+      ) {
+        paymentMethod = label;
+      }
+    });
+
+    const sumItems = Number(
+      items
+        .reduce(
+          (acc, i) =>
+            acc + (i.vProd ?? Number((i.qCom * i.vUnCom - i.vDesc).toFixed(2))),
+          0
+        )
+        .toFixed(2)
+    );
+
+    const totalGross = grossFromDom > 0 ? Number(grossFromDom.toFixed(2)) : sumItems;
+    const totalDiscount =
+      discountFromDom > 0
+        ? Number(discountFromDom.toFixed(2))
+        : netFromDom > 0 && totalGross > netFromDom
+          ? Number((totalGross - netFromDom).toFixed(2))
+          : Number(items.reduce((acc, i) => acc + i.vDesc, 0).toFixed(2));
+
+    const infosText = $('#infos').text().replace(/\s+/g, ' ');
+    const numMatch = infosText.match(/N[úu]mero:\s*(\d+)/i);
+    const serieMatch = infosText.match(/S[ée]rie:\s*(\d+)/i);
+    const emissaoMatch = infosText.match(
+      /Emiss[ãa]o:\s*(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}:\d{2}:\d{2})/i
+    );
+
+    const issueNumber = numMatch
+      ? numMatch[1]
+      : parseInt(accessKey.substring(25, 34), 10).toString();
+    const series = serieMatch
+      ? serieMatch[1]
+      : parseInt(accessKey.substring(22, 25), 10).toString();
+    const issuedAt = emissaoMatch
+      ? `${emissaoMatch[3]}-${emissaoMatch[2]}-${emissaoMatch[1]}T${emissaoMatch[4]}-03:00`
+      : new Date().toISOString();
+
+    const tradeName = this.resolveKnownTradeName(cnpjStore, legalName, neighborhood);
 
     return {
       accessKey,
       sefazUrl: url,
-      cnpjStore: cnpj,
-      tradeName: storeInfo.tradeName,
-      legalName: storeInfo.corporateName,
-      city: 'Florianópolis',
-      state: ufCode === '42' ? 'SC' : 'BR',
-      issuedAt: dateStr,
-      issueNumber: number,
+      cnpjStore,
+      tradeName,
+      legalName,
+      city,
+      state,
+      issuedAt,
+      issueNumber,
       series,
-      paymentMethod: seed % 2 === 0 ? 'Cartão de Crédito' : 'Dinheiro',
-      totalGross: Number(totalGross.toFixed(2)),
-      totalDiscount: Number(totalDiscount.toFixed(2)),
+      paymentMethod,
+      street,
+      number,
+      neighborhood,
+      totalGross,
+      totalDiscount,
       items,
     };
   }
 
-  private async scrapeSefazPortal(url: string, accessKey: string): Promise<SefazScrapedReceipt> {
+  private async scrapeWithChromeCdp(url: string): Promise<string | null> {
+    const fs = await import('node:fs');
+    const { spawn } = await import('node:child_process');
+
+    const candidatePaths = [
+      process.env.CHROME_PATH,
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      '/usr/bin/google-chrome',
+      '/usr/bin/chromium-browser',
+      '/usr/bin/chromium',
+    ].filter((p): p is string => Boolean(p));
+
+    const chromeBin = candidatePaths.find((p) => fs.existsSync(p));
+    if (!chromeBin) {
+      return null;
+    }
+
+    const port = 9400 + Math.floor(Math.random() * 400);
+    const userDataDir = `/tmp/sefaz-chrome-cdp-${port}`;
+
+    const proc = spawn(
+      chromeBin,
+      [
+        `--remote-debugging-port=${port}`,
+        `--user-data-dir=${userDataDir}`,
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--disable-blink-features=AutomationControlled',
+        '--window-position=-2400,-2400',
+        '--window-size=1280,800',
+        url,
+      ],
+      { stdio: 'ignore' }
+    );
+
+    const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    try {
+      let wsUrl: string | undefined;
+      for (let attempt = 0; attempt < 25; attempt++) {
+        await sleep(300);
+        try {
+          const res = await fetch(`http://127.0.0.1:${port}/json`);
+          if (res.ok) {
+            const targets = (await res.json()) as CdpTargetInfo[];
+            const pageTarget = targets.find(
+              (t) => t.type === 'page' && t.webSocketDebuggerUrl
+            );
+            if (pageTarget?.webSocketDebuggerUrl) {
+              wsUrl = pageTarget.webSocketDebuggerUrl;
+              break;
+            }
+          }
+        } catch {}
+      }
+
+      if (!wsUrl) {
+        return null;
+      }
+
+      const ws = new WebSocket(wsUrl);
+      await new Promise<void>((resolve, reject) => {
+        ws.onopen = () => resolve();
+        ws.onerror = (err) => reject(err);
+      });
+
+      let msgId = 1;
+      const sendCdp = (
+        method: string,
+        params: Record<string, unknown> = {}
+      ): Promise<CdpMessagePayload['result']> => {
+        const id = msgId++;
+        return new Promise((resolve) => {
+          const listener = (event: MessageEvent) => {
+            try {
+              const data = JSON.parse(String(event.data)) as CdpMessagePayload;
+              if (data.id === id) {
+                ws.removeEventListener('message', listener);
+                resolve(data.result);
+              }
+            } catch {}
+          };
+          ws.addEventListener('message', listener);
+          ws.send(JSON.stringify({ id, method, params }));
+        });
+      };
+
+      let finalHtml: string | null = null;
+
+      for (let step = 0; step < 30; step++) {
+        await sleep(1000);
+        const evalRes = await sendCdp('Runtime.evaluate', {
+          expression: `(() => {
+            const btn = document.querySelector('#Body_Main_ButtonValidar');
+            const tsInput = document.querySelector('[name="cf-turnstile-response"]');
+            const token = tsInput ? tsInput.value : '';
+            let clicked = false;
+            if (btn && token && token.length > 10 && !window.__sefazClicked) {
+              window.__sefazClicked = true;
+              btn.click();
+              clicked = true;
+            }
+            return {
+              href: location.href,
+              hasTabResult: document.documentElement.innerHTML.includes('tabResult'),
+              hasVerifyBtn: Boolean(btn),
+              turnstileResponse: token ? token.substring(0, 16) : '',
+              clicked
+            };
+          })()`,
+          returnByValue: true,
+        });
+
+        const status = (evalRes?.result?.value ?? {}) as CdpEvalStatus;
+        if (status.hasTabResult || (status.href && status.href.includes('ConsultaPublicaNFCe'))) {
+          await sleep(400);
+          const htmlRes = await sendCdp('Runtime.evaluate', {
+            expression: 'document.documentElement.outerHTML',
+            returnByValue: true,
+          });
+          const htmlVal = htmlRes?.result?.value;
+          if (typeof htmlVal === 'string' && htmlVal.includes('tabResult')) {
+            finalHtml = htmlVal;
+            break;
+          }
+        }
+      }
+
+      ws.close();
+      return finalHtml;
+    } catch {
+      return null;
+    } finally {
+      proc.kill('SIGTERM');
+    }
+  }
+
+  private async scrapeSefazPortal(
+    url: string,
+    accessKey: string
+  ): Promise<SefazScrapedReceipt> {
     const known = findKnownReceipt(accessKey);
     if (known) {
       return this.fixtureToSefazReceipt(known, url);
     }
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    const timeout = setTimeout(() => controller.abort(), 10000);
 
     try {
       const response = await fetch(url, {
         headers: {
           'User-Agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
           Accept: 'text/html,application/xhtml+xml',
         },
         signal: controller.signal,
       });
 
-      if (!response.ok) {
-        return this.synthesizeReceiptFromAccessKey(accessKey, url);
-      }
-
-      const rawHtml = await response.text();
-      const embeddedHtml = this.extractEmbeddedHtml(rawHtml);
-      const effectiveHtml = embeddedHtml ?? rawHtml;
-      const $ = cheerio.load(effectiveHtml);
-
-      const legalName =
-        $('#u20, .txtTopo').first().text().trim() || 'Estabelecimento Comercial NFC-e';
-      const cnpjRaw = $('div.text:contains("CNPJ")').text() || effectiveHtml;
-      const cnpjMatch = cnpjRaw.match(/(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2})/);
-      const cnpjStore = cnpjMatch ? cnpjMatch[1].replace(/\D/g, '') : accessKey.substring(6, 20);
-
-      const items: SefazScrapedItem[] = [];
-      $('table#tabResult tr[id^="Item"]').each((_, el) => {
-        const xProd = $(el).find('.txtTit, .txtTit2').first().text().trim();
-        const codeText = $(el).find('.RCod').text();
-        const cProdMatch = codeText.match(/Código:\s*([A-Za-z0-9_-]+)/i);
-        const eanMatch = codeText.match(/EAN:\s*([0-9]{8,14})/i);
-
-        const qComText = $(el).find('.Rqtd').text().replace(/[^\d,.-]/g, '').replace(',', '.');
-        const uComText = $(el).find('.RUN').text().replace(/UN:\s*/i, '').trim() || 'UN';
-        const vUnText = $(el).find('.RvlUnit').text().replace(/[^\d,.-]/g, '').replace(',', '.');
-        const vDescText = $(el).find('.RvlDesc').text().replace(/[^\d,.-]/g, '').replace(',', '.');
-
-        if (xProd) {
-          items.push({
-            cProd: cProdMatch ? cProdMatch[1] : xProd.substring(0, 12),
-            xProd,
-            cEAN: eanMatch ? eanMatch[1] : 'SEM GTIN',
-            uCom: uComText.substring(0, 10).toUpperCase(),
-            qCom: Math.max(0.001, parseFloat(qComText) || 1),
-            vUnCom: Math.max(0.01, parseFloat(vUnText) || 0),
-            vDesc: Math.max(0, parseFloat(vDescText) || 0),
-          });
+      if (response.ok) {
+        const rawHtml = await response.text();
+        const parsedDirect = this.parseSefazHtml(rawHtml, accessKey, url);
+        if (parsedDirect && parsedDirect.items.length > 0) {
+          return parsedDirect;
         }
-      });
-
-      if (items.length === 0) {
-        return this.synthesizeReceiptFromAccessKey(accessKey, url);
       }
-
-      const totalGross = items.reduce((acc, i) => acc + i.qCom * i.vUnCom, 0);
-      const totalDiscount = items.reduce((acc, i) => acc + i.vDesc, 0);
-
-      return {
-        accessKey,
-        sefazUrl: url,
-        cnpjStore,
-        tradeName: legalName,
-        legalName,
-        city: 'Florianópolis',
-        state: 'SC',
-        issuedAt: new Date().toISOString(),
-        totalGross: Number(totalGross.toFixed(2)),
-        totalDiscount: Number(totalDiscount.toFixed(2)),
-        items,
-      };
     } catch {
-      if (known) {
-        return this.fixtureToSefazReceipt(known, url);
-      }
-      return this.synthesizeReceiptFromAccessKey(accessKey, url);
     } finally {
       clearTimeout(timeout);
     }
+
+    const cdpHtml = await this.scrapeWithChromeCdp(url);
+    if (cdpHtml) {
+      const parsedCdp = this.parseSefazHtml(cdpHtml, accessKey, url);
+      if (parsedCdp && parsedCdp.items.length > 0) {
+        return parsedCdp;
+      }
+    }
+
+    throw new SefazIngestionError(
+      'O portal da SEFAZ exigiu verificação anti-bot (Cloudflare Turnstile) e não retornou os itens da nota fiscal.',
+      502
+    );
   }
 
   private async upsertStore(receipt: SefazScrapedReceipt): Promise<string> {
@@ -459,41 +756,115 @@ export class NfceIngestionService {
     const validEan =
       item.cEAN && /^[0-9]{8,14}$/.test(item.cEAN) ? item.cEAN : null;
 
-    const matches = await db.query<MatchProductResult>(
-      'SELECT canonical_id, resolution_type, confidence FROM match_or_resolve_product($1, $2, $3)',
-      [storeId, item.xProd, validEan]
-    );
-
-    if (matches.length > 0) {
-      return matches[0].canonical_id;
+    if (item.cProd) {
+      const byCode = await db.queryOne<{ canonical_product_id: string }>(
+        `
+        SELECT canonical_product_id
+        FROM store_product_aliases
+        WHERE store_id = $1 AND store_internal_code = $2
+        LIMIT 1
+        `,
+        [storeId, item.cProd]
+      );
+      if (byCode) {
+        return byCode.canonical_product_id;
+      }
     }
 
-    const normalizedText = this.sanitizeFiscalDescription(item.xProd);
-    const baseUnit = this.inferBaseUnit(item.uCom, normalizedText);
-
-    const createdProduct = await db.queryOne<{ id: string }>(
+    const existingDescAlias = await db.queryOne<{
+      canonical_product_id: string;
+      store_internal_code: string | null;
+    }>(
       `
-      INSERT INTO canonical_products (gtin_ean, commercial_name, category, standard_unit, normalized_name)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING id
+      SELECT canonical_product_id, store_internal_code
+      FROM store_product_aliases
+      WHERE store_id = $1 AND LOWER(TRIM(raw_description)) = LOWER(TRIM($2))
+      LIMIT 1
       `,
-      [validEan, normalizedText, this.inferCategory(normalizedText), baseUnit, normalizedText.toLowerCase()]
+      [storeId, item.xProd]
     );
 
-    if (!createdProduct) {
-      throw new Error(`Erro ao criar produto canônico (${item.xProd})`);
+    const hasConflictingStoreCode =
+      existingDescAlias !== null &&
+      Boolean(existingDescAlias.store_internal_code) &&
+      Boolean(item.cProd) &&
+      existingDescAlias.store_internal_code !== item.cProd &&
+      !validEan;
+
+    if (!hasConflictingStoreCode && !item.commercialName?.includes('(Cód.')) {
+      const matches = await db.query<MatchProductResult>(
+        'SELECT canonical_id, resolution_type, confidence FROM match_or_resolve_product($1, $2, $3)',
+        [storeId, item.xProd, validEan]
+      );
+
+      if (matches.length > 0) {
+        return matches[0].canonical_id;
+      }
     }
+
+    const sanitizedText = this.sanitizeFiscalDescription(item.xProd);
+    const resolvedCommercialName = hasConflictingStoreCode
+      ? item.commercialName ?? `${sanitizedText} (Cód. ${item.cProd})`
+      : item.commercialName ?? sanitizedText;
+
+    const baseUnit =
+      item.standardUnit ?? this.inferBaseUnit(item.uCom, resolvedCommercialName);
+    const resolvedCategory =
+      item.category ?? this.inferCategory(resolvedCommercialName);
+
+    const existingByNormalized = await db.queryOne<{ id: string }>(
+      `
+      SELECT id FROM canonical_products
+      WHERE normalized_name = $1
+      LIMIT 1
+      `,
+      [resolvedCommercialName.toLowerCase()]
+    );
+
+    let productId = existingByNormalized?.id;
+
+    if (!productId) {
+      const createdProduct = await db.queryOne<{ id: string }>(
+        `
+        INSERT INTO canonical_products (gtin_ean, commercial_name, category, standard_unit, normalized_name)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (gtin_ean) DO UPDATE SET
+          commercial_name = EXCLUDED.commercial_name,
+          category = EXCLUDED.category,
+          standard_unit = EXCLUDED.standard_unit
+        RETURNING id
+        `,
+        [
+          validEan,
+          resolvedCommercialName,
+          resolvedCategory,
+          baseUnit,
+          resolvedCommercialName.toLowerCase(),
+        ]
+      );
+
+      if (!createdProduct) {
+        throw new Error(`Erro ao criar produto canônico (${item.xProd})`);
+      }
+      productId = createdProduct.id;
+    }
+
+    const aliasRawDescription = hasConflictingStoreCode
+      ? `${item.xProd} #${item.cProd}`
+      : item.xProd;
 
     await db.query(
       `
       INSERT INTO store_product_aliases (store_id, canonical_product_id, store_internal_code, raw_description, confidence_score)
       VALUES ($1, $2, $3, $4, 1.00)
-      ON CONFLICT (store_id, raw_description) DO NOTHING
+      ON CONFLICT (store_id, raw_description) DO UPDATE SET
+        canonical_product_id = EXCLUDED.canonical_product_id,
+        store_internal_code = EXCLUDED.store_internal_code
       `,
-      [storeId, createdProduct.id, item.cProd, item.xProd]
+      [storeId, productId, item.cProd, aliasRawDescription]
     );
 
-    return createdProduct.id;
+    return productId;
   }
 
   public sanitizeFiscalDescription(raw: string): string {
