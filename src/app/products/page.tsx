@@ -187,7 +187,7 @@ export default function PurchasedProductsPage() {
           actions={
             <Link
               href="/scanner"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold bg-primary text-white hover:bg-primary-hover shadow-xs transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold bg-primary text-white hover:bg-primary-hover shadow-xs transition-colors min-h-[44px] w-full sm:w-auto"
             >
               <QrCode size={16} weight="bold" />
               <span>Importar Nova Nota</span>
@@ -304,7 +304,7 @@ export default function PurchasedProductsPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none overflow-touch">
             {categories.map((cat) => {
               const isSelected = selectedCategory === cat;
               return (
@@ -312,7 +312,7 @@ export default function PurchasedProductsPage() {
                   key={cat}
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors shrink-0 ${
+                  className={`px-3.5 py-2 min-h-[40px] rounded-full text-[13px] font-medium transition-colors shrink-0 touch-target ${
                     isSelected
                       ? 'bg-ink text-white font-semibold'
                       : 'bg-surface-soft text-muted hover:text-ink hover:bg-surface-strong border border-hairline'
@@ -440,7 +440,7 @@ export default function PurchasedProductsPage() {
                     <button
                       type="button"
                       onClick={() => handleOpenHistory(product)}
-                      className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-full border border-hairline text-[13px] font-semibold text-ink hover:bg-ink hover:text-white transition-colors"
+                      className="w-full flex items-center justify-center gap-2 py-2.5 px-3 min-h-[44px] rounded-full border border-hairline text-[13px] font-semibold text-ink hover:bg-ink hover:text-white transition-colors touch-target"
                     >
                       <ChartLineUp size={16} weight="bold" />
                       <span>Ver Histórico de Preços</span>

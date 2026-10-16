@@ -922,11 +922,11 @@ export default function ForecastCartPage() {
               {cartItems.map((item) => (
                 <div
                   key={item.canonicalProductId}
-                  className="p-3.5 flex items-center justify-between gap-3 text-[13px] hover:bg-surface-soft/30 transition-colors"
+                  className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[13px] hover:bg-surface-soft/30 transition-colors"
                 >
-                  <div className="min-w-0 flex-1 space-y-0.5">
+                  <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <p className="font-semibold text-ink truncate">{item.name}</p>
+                      <p className="font-semibold text-ink leading-tight">{item.name}</p>
                       {item.origin && (
                         <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-surface-soft text-muted">
                           {item.origin}
@@ -943,31 +943,31 @@ export default function ForecastCartPage() {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="flex items-center border border-hairline rounded-md bg-canvas overflow-hidden">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-hairline/60">
+                    <div className="flex items-center border border-hairline rounded-lg bg-canvas overflow-hidden shadow-xs">
                       <button
                         type="button"
                         onClick={() => handleUpdateQty(item.canonicalProductId, -1)}
-                        className="w-7 h-7 flex items-center justify-center text-ink hover:bg-surface-soft transition-colors"
+                        className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center text-ink hover:bg-surface-soft transition-colors touch-target"
                         aria-label="Diminuir quantidade"
                       >
-                        <Minus size={12} weight="bold" />
+                        <Minus size={14} weight="bold" />
                       </button>
-                      <span className="min-w-[34px] px-1 text-center font-bold text-ink tabular-nums text-[12px]">
+                      <span className="min-w-[40px] sm:min-w-[34px] px-1 text-center font-bold text-ink tabular-nums text-[13px] sm:text-[12px]">
                         {Number(item.quantity.toFixed(3))}
                       </span>
                       <button
                         type="button"
                         onClick={() => handleUpdateQty(item.canonicalProductId, 1)}
-                        className="w-7 h-7 flex items-center justify-center text-ink hover:bg-surface-soft transition-colors"
+                        className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center text-ink hover:bg-surface-soft transition-colors touch-target"
                         aria-label="Aumentar quantidade"
                       >
-                        <Plus size={12} weight="bold" />
+                        <Plus size={14} weight="bold" />
                       </button>
                     </div>
 
-                    <div className="text-right w-20 tabular-nums">
-                      <strong className="block text-ink font-bold text-[14px]">
+                    <div className="text-right sm:w-24 tabular-nums">
+                      <strong className="block text-ink font-bold text-[15px] sm:text-[14px]">
                         {formatBRL(item.quantity * item.estimatedUnitPrice)}
                       </strong>
                     </div>
@@ -975,22 +975,22 @@ export default function ForecastCartPage() {
                     <button
                       type="button"
                       onClick={() => handleRemoveItem(item.canonicalProductId)}
-                      className="p-1.5 text-muted hover:text-danger hover:bg-danger/10 transition-colors rounded-md"
+                      className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center text-muted hover:text-danger hover:bg-danger/10 transition-colors rounded-lg touch-target"
                       aria-label="Remover item"
                     >
-                      <Trash size={15} weight="bold" />
+                      <Trash size={16} weight="bold" />
                     </button>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="p-4 rounded-xl bg-surface-soft border border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="p-4 sm:p-5 rounded-xl bg-surface-soft border border-hairline flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <span className="text-[12px] text-muted block">
                   Total de referência ({cartItems.length} {cartItems.length === 1 ? 'item' : 'itens'}):
                 </span>
-                <strong className="text-[22px] font-bold text-ink tabular-nums">
+                <strong className="text-[22px] sm:text-[24px] font-bold text-ink tabular-nums">
                   {formatBRL(cartEstimatedTotal)}
                 </strong>
               </div>
@@ -1000,7 +1000,7 @@ export default function ForecastCartPage() {
                 size="lg"
                 onClick={handleCalculateForecast}
                 disabled={isCalculating || cartItems.length === 0}
-                className="gap-2 shrink-0 rounded-full shadow-sm"
+                className="w-full sm:w-auto gap-2 shrink-0 rounded-full shadow-sm min-h-[48px]"
               >
                 {isCalculating ? (
                   <>

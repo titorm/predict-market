@@ -138,15 +138,15 @@ export default function DashboardGeneralPage() {
         title="Resumo Financeiro"
         description="Acompanhe quanto você já economizou, seus gastos mensais e a variação de preços dos seus produtos."
         actions={
-          <div className="flex flex-wrap items-center gap-2">
-            <Link href="/forecast">
-              <Button variant="primary" size="md" className="gap-2 rounded-full">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <Link href="/forecast" className="w-full sm:w-auto">
+              <Button variant="primary" size="md" className="w-full sm:w-auto gap-2 rounded-full min-h-[44px]">
                 <ShoppingCart size={16} weight="bold" />
                 <span>Simular Próxima Compra</span>
               </Button>
             </Link>
-            <Link href="/scanner">
-              <Button variant="secondary" size="md" className="gap-2 rounded-full">
+            <Link href="/scanner" className="w-full sm:w-auto">
+              <Button variant="secondary" size="md" className="w-full sm:w-auto gap-2 rounded-full min-h-[44px]">
                 <QrCode size={16} weight="bold" />
                 <span>Importar Nota</span>
               </Button>
@@ -311,13 +311,13 @@ export default function DashboardGeneralPage() {
           </div>
 
           <div className="pt-2">
-            <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 sm:gap-6 items-end h-44 border-b border-hairline pb-2">
+            <div className="flex sm:grid sm:grid-cols-6 gap-3 sm:gap-6 items-end h-44 border-b border-hairline pb-2 overflow-x-auto overflow-touch">
               {stats.monthlyTrends.map((trend) => {
                 const spentPct = Math.min(100, Math.round((trend.spent / maxMonthlySpent) * 100));
                 const savingsPct = Math.min(100, Math.round((trend.savings / maxMonthlySpent) * 100));
 
                 return (
-                  <div key={trend.month} className="flex flex-col items-center justify-end h-full gap-1 group">
+                  <div key={trend.month} className="flex flex-col items-center justify-end h-full gap-1 group min-w-[72px] sm:min-w-0 flex-1">
                     <div className="w-full flex items-end justify-center gap-1.5 h-36">
                       <div
                         style={{ height: `${Math.max(15, spentPct)}%` }}

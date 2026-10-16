@@ -173,7 +173,7 @@ export default function ReceiptsPage() {
           <Button
             variant="primary"
             onClick={() => setIsScannerOpen(true)}
-            className="gap-2"
+            className="gap-2 rounded-full min-h-[44px] w-full sm:w-auto"
           >
             <QrCode size={18} weight="bold" />
             <span>Importar Nova Nota</span>
@@ -307,7 +307,7 @@ export default function ReceiptsPage() {
                         e.stopPropagation();
                         handleOpenDrawer(receipt.id);
                       }}
-                      className="gap-1.5 h-10 text-[13px]"
+                      className="gap-1.5 h-11 sm:h-10 text-[13px] touch-target"
                     >
                       <span>Ver Resumo</span>
                       <ArrowRight size={14} weight="bold" />
@@ -319,7 +319,7 @@ export default function ReceiptsPage() {
                         e.stopPropagation();
                         setReceiptToDelete(receipt);
                       }}
-                      className="h-10 px-3 text-[13px]"
+                      className="h-11 sm:h-10 px-3.5 text-[13px] touch-target"
                       title="Excluir nota fiscal"
                       aria-label="Excluir nota fiscal"
                     >

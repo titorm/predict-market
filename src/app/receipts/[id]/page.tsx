@@ -266,19 +266,19 @@ export default function ReceiptDetailPage({
             </div>
           }
           actions={
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               <Button
                 variant="secondary"
                 size="md"
                 onClick={() => setIsDeleteModalOpen(true)}
-                className="gap-2 text-danger border-danger/30 hover:border-danger hover:bg-danger/10 hover:text-danger rounded-full"
+                className="gap-2 text-danger border-danger/30 hover:border-danger hover:bg-danger/10 hover:text-danger rounded-full min-h-[44px] w-full sm:w-auto"
               >
                 <Trash size={16} weight="bold" />
                 <span>Excluir Nota</span>
               </Button>
               <Link
                 href="/scanner"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold bg-primary text-white hover:bg-primary-hover shadow-xs transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold bg-primary text-white hover:bg-primary-hover shadow-xs transition-colors min-h-[44px] w-full sm:w-auto"
               >
                 <QrCode size={16} weight="bold" />
                 <span>Escanear Nova Nota</span>
@@ -408,14 +408,14 @@ export default function ReceiptDetailPage({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 overflow-touch scrollbar-none">
             <Funnel size={16} weight="bold" className="text-muted shrink-0" />
             {categories.map((cat) => (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1 rounded-full text-[12px] font-semibold whitespace-nowrap transition-colors ${
+                className={`px-3.5 py-1.5 min-h-[38px] rounded-full text-[12px] font-semibold whitespace-nowrap transition-colors touch-target ${
                   selectedCategory === cat
                     ? 'bg-ink text-white'
                     : 'bg-surface-soft border border-hairline text-muted hover:text-ink'
@@ -427,7 +427,7 @@ export default function ReceiptDetailPage({
           </div>
 
           <Card variant="bordered" className="overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-touch">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-hairline bg-surface-soft text-[12px] font-semibold text-muted uppercase tracking-wider">

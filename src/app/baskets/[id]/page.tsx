@@ -200,28 +200,30 @@ export default function BasketDetailPage({ params }: BasketPageProps) {
             <h2 className="text-[18px] font-bold text-ink mb-4">Itens da Cesta ({items.length})</h2>
             <div className="divide-y divide-hairline-soft">
               {items.map((item, idx) => (
-                <div key={`${item.canonicalProductId}-${idx}`} className="py-4 flex items-center justify-between gap-4">
+                <div key={`${item.canonicalProductId}-${idx}`} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="text-[16px] font-medium text-ink truncate">{item.commercialName}</p>
-                    <p className="text-[13px] text-muted">Preço pago: {formatBRL(item.currentUnitPrice)} / {item.baseUnit.toLowerCase()}</p>
+                    <p className="text-[15px] sm:text-[16px] font-medium text-ink leading-tight">{item.commercialName}</p>
+                    <p className="text-[12px] sm:text-[13px] text-muted mt-0.5">Preço pago: {formatBRL(item.currentUnitPrice)} / {item.baseUnit.toLowerCase()}</p>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center border border-hairline rounded-sm">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-hairline/60">
+                    <div className="flex items-center border border-hairline rounded-lg overflow-hidden bg-canvas shadow-xs">
                       <button
                         type="button"
                         onClick={() => updateQuantity(idx, item.quantity - 1)}
-                        className="w-8 h-8 flex items-center justify-center text-ink hover:bg-surface-soft"
+                        className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center text-ink hover:bg-surface-soft touch-target"
+                        aria-label="Diminuir quantidade"
                       >
                         -
                       </button>
-                      <span className="w-10 text-center font-semibold text-ink text-[14px] tabular-nums">
+                      <span className="min-w-[40px] sm:min-w-[34px] text-center font-semibold text-ink text-[14px] tabular-nums">
                         {item.quantity}
                       </span>
                       <button
                         type="button"
                         onClick={() => updateQuantity(idx, item.quantity + 1)}
-                        className="w-8 h-8 flex items-center justify-center text-ink hover:bg-surface-soft"
+                        className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center text-ink hover:bg-surface-soft touch-target"
+                        aria-label="Aumentar quantidade"
                       >
                         +
                       </button>
@@ -230,7 +232,7 @@ export default function BasketDetailPage({ params }: BasketPageProps) {
                     <button
                       type="button"
                       onClick={() => removeItem(idx)}
-                      className="w-8 h-8 rounded-sm text-muted hover:text-error flex items-center justify-center"
+                      className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg text-muted hover:text-error hover:bg-danger/10 flex items-center justify-center touch-target transition-colors"
                       aria-label="Remover item"
                     >
                       <Trash size={16} weight="bold" />

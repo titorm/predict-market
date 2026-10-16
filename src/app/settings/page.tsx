@@ -205,7 +205,7 @@ export default function SettingsPage() {
         actions={
           <Link
             href="/scanner"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold bg-primary text-white hover:bg-primary-hover shadow-xs transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold bg-primary text-white hover:bg-primary-hover shadow-xs transition-colors min-h-[44px] w-full sm:w-auto"
           >
             <QrCode size={16} weight="bold" />
             <span>Escanear Nova Nota</span>
@@ -328,7 +328,7 @@ export default function SettingsPage() {
             type="submit"
             variant="primary"
             size="md"
-            className="gap-2"
+            className="gap-2 min-h-[44px] w-full sm:w-auto"
             disabled={!isFormFilled || isSaving}
             isLoading={isSaving}
           >
@@ -353,7 +353,7 @@ export default function SettingsPage() {
           variant="secondary"
           size="sm"
           onClick={() => setIsDeleteModalOpen(true)}
-          className="border-danger/40 text-danger hover:bg-danger hover:text-white rounded-lg transition-colors"
+          className="border-danger/40 text-danger hover:bg-danger hover:text-white rounded-lg transition-colors min-h-[44px] w-full sm:w-auto"
         >
           <Trash size={16} weight="bold" className="mr-1.5" />
           <span>Excluir Minha Conta</span>

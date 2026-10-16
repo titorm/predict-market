@@ -76,57 +76,58 @@ export default function LandingPage() {
 
   return (
     <div className="bg-canvas text-ink min-h-screen">
-      <header className="border-b border-hairline bg-canvas sticky top-0 z-20">
-        <div className="max-w-[1280px] mx-auto px-6 h-[72px] flex items-center justify-between">
+      <header className="border-b border-hairline bg-canvas sticky top-0 z-20 safe-top">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 h-[64px] sm:h-[72px] flex items-center justify-between">
           <Link href="/" className="flex items-center">
-            <PredictMarketLogo size={32} showText={true} />
+            <PredictMarketLogo size={30} showText={true} />
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link href="/auth/login">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="px-2.5 sm:px-3 text-[13px]">
                 Entrar
               </Button>
             </Link>
-            <Link href="/auth/signup">
+            <Link href="/auth/signup" className="hidden sm:inline-block">
               <Button variant="secondary" size="sm">
                 Criar Conta Grátis
               </Button>
             </Link>
             <Link href="/scanner">
-              <Button variant="primary" size="sm" className="gap-2">
+              <Button variant="primary" size="sm" className="gap-1.5 sm:gap-2 px-3 sm:px-4">
                 <QrCode size={18} weight="bold" />
-                <span>Importar Nota</span>
+                <span className="hidden sm:inline">Importar Nota</span>
+                <span className="sm:hidden">Escanear</span>
               </Button>
             </Link>
           </div>
         </div>
       </header>
 
-      <main className="max-w-[1080px] mx-auto px-6 py-16 space-y-24">
-        <section className="text-center max-w-3xl mx-auto space-y-6">
-          <Badge variant="optimistic" className="gap-1.5 py-1 px-3 text-[12px]">
+      <main className="max-w-[1080px] mx-auto px-4 sm:px-6 py-10 sm:py-16 space-y-16 sm:space-y-24">
+        <section className="text-center max-w-3xl mx-auto space-y-5 sm:space-y-6">
+          <Badge variant="optimistic" className="gap-1.5 py-1 px-3 text-[11px] sm:text-[12px]">
             <Sparkle size={14} weight="bold" />
             <span>Economia Inteligente Baseada nas Suas Notas Fiscais</span>
           </Badge>
 
-          <h1 className="text-[40px] md:text-[56px] font-bold leading-[1.08] tracking-[-1.5px] text-ink">
+          <h1 className="text-[30px] sm:text-[44px] md:text-[56px] font-bold leading-[1.12] sm:leading-[1.08] tracking-[-1px] sm:tracking-[-1.5px] text-ink">
             Pague até 17% menos no supermercado sem mudar as marcas que você ama.
           </h1>
 
-          <p className="text-[17px] md:text-[18px] text-body leading-[1.5]">
+          <p className="text-[15px] sm:text-[17px] md:text-[18px] text-body leading-[1.5]">
             Escaneie o QR Code das suas notas fiscais em 5 segundos. O PredictMarket audita cada preço pago, avisa o que está acabando na sua despensa e mostra exatamente onde sua próxima compra sai mais barata.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-3 sm:pt-4">
             <Link href="/auth/signup" className="w-full sm:w-auto">
-              <Button variant="primary" size="lg" className="w-full gap-2">
+              <Button variant="primary" size="lg" className="w-full gap-2 min-h-[48px]">
                 <span>Começar a Economizar Grátis</span>
                 <ArrowRight size={18} weight="bold" />
               </Button>
             </Link>
             <Link href="/scanner" className="w-full sm:w-auto">
-              <Button variant="secondary" size="lg" className="w-full gap-2">
+              <Button variant="secondary" size="lg" className="w-full gap-2 min-h-[48px]">
                 <QrCode size={20} weight="bold" />
                 <span>Escanear Primeira Nota Fiscal</span>
               </Button>
