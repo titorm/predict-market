@@ -8,7 +8,7 @@
     "start": "next start -p 10450",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test src/core/engine/__tests__/GroceryForecastEngine.test.ts src/core/engine/__tests__/PantryReplenishmentEngine.test.ts src/core/ingestion/__tests__/known-receipts.test.ts src/core/ingestion/__tests__/duplicate-ingestion.test.ts src/lib/auth/__tests__/auth.test.ts src/lib/__tests__/dev-logger.test.ts src/lib/__tests__/validation.test.ts src/lib/__tests__/api-client.test.ts src/lib/__tests__/auth-session.test.ts src/data/__tests__/santa-catarina-cities.test.ts src/lib/__tests__/products-catalog.test.ts",
+    "test": "node --test src/core/engine/__tests__/GroceryForecastEngine.test.ts src/core/engine/__tests__/PantryReplenishmentEngine.test.ts src/core/ingestion/__tests__/known-receipts.test.ts src/core/ingestion/__tests__/duplicate-ingestion.test.ts src/core/categorization/__tests__/LocalProductCategorizer.test.ts src/lib/auth/__tests__/auth.test.ts src/lib/__tests__/dev-logger.test.ts src/lib/__tests__/validation.test.ts src/lib/__tests__/api-client.test.ts src/lib/__tests__/auth-session.test.ts src/data/__tests__/santa-catarina-cities.test.ts src/lib/__tests__/products-catalog.test.ts",
     "pages:build": "npx @cloudflare/next-on-pages"
   },
   "dependencies": {

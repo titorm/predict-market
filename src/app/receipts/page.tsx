@@ -168,9 +168,7 @@ export default function ReceiptsPage() {
     <div className="max-w-[1080px] mx-auto px-4 sm:px-6 py-8 space-y-8">
       <PageHeader
         title="Minhas Notas Fiscais"
-        description="Consulte cupons importados, visualize o resumo na barra lateral ou veja a página completa."
-        backHref="/dashboard"
-        backLabel="Voltar ao Dashboard"
+        description="Consulte todas as suas compras registradas, confira os itens de cada cupom e acompanhe os descontos obtidos."
         actions={
           <Button
             variant="primary"
@@ -178,7 +176,7 @@ export default function ReceiptsPage() {
             className="gap-2"
           >
             <QrCode size={18} weight="bold" />
-            <span>Escanear Nova Nota</span>
+            <span>Importar Nova Nota</span>
           </Button>
         }
       />
@@ -341,7 +339,7 @@ export default function ReceiptsPage() {
             <p className="text-[14px] text-muted">
               {searchQuery
                 ? 'Nenhum cupom fiscal corresponde ao termo pesquisado.'
-                : 'Escaneie seu primeiro cupom fiscal para consultar os produtos e abastecer o motor preditivo.'}
+                : 'Importe seu primeiro cupom fiscal para consultar os itens comprados e descobrir onde economizar.'}
             </p>
             <Button
               variant="primary"
@@ -349,7 +347,7 @@ export default function ReceiptsPage() {
               className="gap-2 mx-auto"
             >
               <QrCode size={18} weight="bold" />
-              <span>Escanear Cupom Fiscal</span>
+              <span>Importar Primeira Nota</span>
             </Button>
           </Card>
         )}

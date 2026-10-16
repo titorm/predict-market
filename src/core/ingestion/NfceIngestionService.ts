@@ -1,5 +1,9 @@
 import * as cheerio from 'cheerio';
 import { db } from '@/lib/db';
+import {
+  classifyProductCategory,
+  cleanFiscalProductName,
+} from '@/core/categorization/LocalProductCategorizer';
 import { findKnownReceipt, KnownReceiptFixture } from './known-receipts';
 import { extractAccessKey } from './access-key-validator';
 import { SefazIngestionError } from './errors';
@@ -503,7 +507,8 @@ export class NfceIngestionService {
       '\\bBISC\\b': 'BISCOITO',
       '\\bREFRIG\\b': 'REFRIGERANTE',
       '\\bDETERG\\b': 'DETERGENTE',
-      '\\bSAB\\b': 'SABAO',
+      '^SAB\\b': 'SABAO',
+      '\\bSAB\\b': 'SABOR',
       '\\bLIQ\\b': 'LIQUIDO',
       '\\bTRAD\\b': 'TRADICIONAL',
     };
@@ -513,11 +518,13 @@ export class NfceIngestionService {
       text = text.replace(new RegExp(pattern, 'gi'), replacement);
     }
 
-    return text
+    const titleCased = text
       .replace(/\s+/g, ' ')
       .trim()
       .toLowerCase()
       .replace(/(?:^|\s)\S/g, (char) => char.toUpperCase());
+
+    return cleanFiscalProductName(titleCased);
   }
 
   private inferBaseUnit(uCom: string, desc: string): 'KG' | 'L' | 'UN' {
@@ -529,12 +536,6 @@ export class NfceIngestionService {
   }
 
   private inferCategory(desc: string): string {
-    const upper = desc.toUpperCase();
-    if (/(ARROZ|FEIJAO|MACARRAO|AZEITE|OLEO|FARINHA|ACUCAR|CAFE)/.test(upper)) return 'Mercearia';
-    if (/(BANANA|BATATA|TOMATE|CEBOLA|MACA|ALFACE|LIMAO|GRANEL)/.test(upper)) return 'Hortifrúti';
-    if (/(CARNE|FRANGO|PEITO|ALCATRA|PATINHO|SUINO|LINGUICA)/.test(upper)) return 'Açougue';
-    if (/(LEITE|QUEIJO|MANTEIGA|IOGURTE|REQUEIJAO)/.test(upper)) return 'Laticínios';
-    if (/(SABAO|DETERGENTE|AMACIANTE|AGUA SANITARIA|DESINFETANTE)/.test(upper)) return 'Limpeza';
-    return 'Geral';
+    return classifyProductCategory(desc);
   }
 }

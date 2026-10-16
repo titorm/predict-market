@@ -30,6 +30,7 @@ import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { useToast } from '@/components/ui/Toast';
 import { ForecastResultsDrawer } from '@/components/forecast/ForecastResultsDrawer';
 import { PredictMarketLoader } from '@/components/ui/PredictMarketLoader';
+import { classifyProductsWithBrowserAI } from '@/core/categorization/LocalProductCategorizer';
 import type {
   BasketForecastReport,
 } from '@/core/engine/GroceryForecastEngine';
@@ -131,9 +132,21 @@ export default function ForecastCartPage() {
         if (catRes.ok) {
           const data = (await catRes.json()) as { products?: CatalogProduct[] };
           if (isMounted && Array.isArray(data.products)) {
-            queueMicrotask(() => {
-              setCatalog(data.products || []);
-            });
+            const { items, corrections } = await classifyProductsWithBrowserAI(
+              data.products
+            );
+            if (isMounted) {
+              queueMicrotask(() => {
+                setCatalog(items);
+              });
+            }
+            if (corrections.length > 0) {
+              fetch('/api/products', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ corrections }),
+              }).catch(() => {});
+            }
           }
         }
 
@@ -497,15 +510,13 @@ export default function ForecastCartPage() {
     <div className="max-w-[1080px] mx-auto px-4 sm:px-6 py-8 space-y-8">
       <PageHeader
         title="Previsão de Gastos"
-        description={`Monte seu carrinho e compare os supermercados mais baratos de ${userCity}.`}
-        backHref="/dashboard"
-        backLabel="Voltar ao Dashboard"
+        description={`Monte sua lista de compras e descubra onde seu carrinho sai mais barato em ${userCity}.`}
         actions={
           <div className="flex items-center gap-2">
             <Link href="/scanner">
               <Button variant="secondary" size="md" className="gap-2">
                 <QrCode size={18} weight="bold" />
-                <span>Escanear Nova Nota</span>
+                <span>Importar Nova Nota</span>
               </Button>
             </Link>
           </div>
@@ -519,10 +530,10 @@ export default function ForecastCartPage() {
               <ShoppingCart size={24} weight="bold" />
             </div>
             <h2 className="text-[20px] font-bold text-ink">
-              Seu Carrinho de Previsão está vazio
+              Monte sua lista e descubra onde pagar menos hoje
             </h2>
             <p className="text-[14px] text-muted max-w-md mx-auto">
-              Escolha abaixo como deseja começar a sua lista de compras para simular custos e economizar nos supermercados.
+              Escolha como deseja iniciar seu carrinho para comparar preços reais entre os supermercados da sua região.
             </p>
           </Card>
 
@@ -533,10 +544,10 @@ export default function ForecastCartPage() {
                   <Receipt size={22} weight="bold" />
                 </div>
                 <h3 className="text-[16px] font-bold text-ink">
-                  A partir de uma Nota Fiscal
+                  Repetir Compra Anterior
                 </h3>
                 <p className="text-[12px] text-muted">
-                  Carregue todos os produtos de uma compra recente para simular quanto eles custariam hoje.
+                  Importe todos os itens de uma nota fiscal recente para ver quanto essa mesma compra custaria hoje.
                 </p>
               </div>
 
@@ -545,17 +556,23 @@ export default function ForecastCartPage() {
                   <>
                     <Select
                       size="sm"
-                      variant="surface"
+                      variant="default"
                       value={selectedReceiptId}
                       onChange={(e) => setSelectedReceiptId(e.target.value)}
                       aria-label="Selecionar Nota Fiscal"
-                    >
-                      {receiptsList.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {getReceiptStoreName(r)} ({formatDate(getReceiptDate(r))}) · {formatBRL(getReceiptAmount(r))}
-                        </option>
-                      ))}
-                    </Select>
+                      options={receiptsList.map((r) => {
+                        const formattedDate = formatDate(getReceiptDate(r));
+                        return {
+                          value: r.id,
+                          label: getReceiptStoreName(r),
+                          description: formattedDate
+                            ? `Compra em ${formattedDate}`
+                            : undefined,
+                          detail: formatBRL(getReceiptAmount(r)),
+                          icon: <Storefront size={15} weight="bold" />,
+                        };
+                      })}
+                    />
 
                     <Button
                       variant="primary"
@@ -569,7 +586,7 @@ export default function ForecastCartPage() {
                       ) : (
                         <Receipt size={16} weight="bold" />
                       )}
-                      <span>Carregar Nota no Carrinho</span>
+                      <span>Carregar Itens da Nota</span>
                     </Button>
                   </>
                 ) : (
@@ -587,14 +604,14 @@ export default function ForecastCartPage() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <h3 className="text-[16px] font-bold text-ink">
-                    Lista Inteligente Heurística
+                    Reposição Automática
                   </h3>
                   <Badge variant="optimistic" className="text-[10px] py-0 px-1.5">
-                    Motor Local
+                    IA Local
                   </Badge>
                 </div>
                 <p className="text-[12px] text-muted">
-                  Motor estatístico local: analisa sua frequência real de compras e projeta o reabastecimento ideal da despensa sem chaves externas.
+                  Analisa o ritmo de consumo da sua casa e monta a lista apenas com os produtos que estão prestes a acabar.
                 </p>
               </div>
 
@@ -611,7 +628,7 @@ export default function ForecastCartPage() {
                   ) : (
                     <Sparkle size={16} weight="bold" />
                   )}
-                  <span>Sugerir Lista da Despensa</span>
+                  <span>Gerar Lista da Despensa</span>
                 </Button>
               </div>
             </Card>
@@ -622,10 +639,10 @@ export default function ForecastCartPage() {
                   <ListPlus size={22} weight="bold" />
                 </div>
                 <h3 className="text-[16px] font-bold text-ink">
-                  Montagem Manual
+                  Escolher Item por Item
                 </h3>
                 <p className="text-[12px] text-muted">
-                  Pesquise itens no catálogo de supermercados e monte sua cesta item por item.
+                  Busque produtos do seu histórico e monte uma lista personalizada do zero.
                 </p>
               </div>
 
@@ -674,11 +691,11 @@ export default function ForecastCartPage() {
                 <div className="flex items-center gap-2">
                   <ShoppingCart size={20} weight="bold" className="text-primary" />
                   <h2 className="text-[18px] font-bold text-ink">
-                    Seu Carrinho de Compras ({cartItems.length} {cartItems.length === 1 ? 'item' : 'itens'})
+                    Sua Lista de Compras ({cartItems.length} {cartItems.length === 1 ? 'item' : 'itens'})
                   </h2>
                 </div>
                 <p className="text-[13px] text-muted">
-                  Ajuste quantidades ou adicione novos produtos antes de simular os melhores mercados.
+                  Ajuste as quantidades ou adicione novos produtos antes de comparar os mercados.
                 </p>
               </div>
 
@@ -694,7 +711,7 @@ export default function ForecastCartPage() {
                   ) : (
                     <Brain size={15} weight="bold" />
                   )}
-                  <span>Sugerir Lista Inteligente</span>
+                  <span>Sugerir Reposição da Despensa</span>
                 </button>
 
                 <button
@@ -715,16 +732,16 @@ export default function ForecastCartPage() {
                     <div className="flex items-center gap-2">
                       <Brain size={18} weight="bold" className="text-primary" />
                       <h3 className="text-[15px] font-bold text-ink">
-                        Reposição Heurística da Despensa
+                        Sugestões de Reposição da Despensa
                       </h3>
                       <Badge variant="optimistic" className="text-[11px] py-0.5">
-                        Heurística Local
+                        IA Local
                       </Badge>
                     </div>
                     <p className="text-[12px] text-muted mt-0.5">
                       {smartReport.suggestedItems.length > 0
-                        ? 'Itens com consumo periódico expirado ou estoque baixo.'
-                        : 'Sua despensa foi reabastecida recentemente. Todos os itens constam em estoque.'}
+                        ? 'Produtos que costumam acabar neste período de acordo com suas compras anteriores.'
+                        : 'Sua despensa foi abastecida recentemente. Todos os produtos frequentes estão em dia.'}
                     </p>
                   </div>
 

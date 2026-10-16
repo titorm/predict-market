@@ -15,12 +15,16 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { FeedbackAlert } from '@/components/ui/FeedbackAlert';
+import { PredictMarketLogo } from '@/components/ui/PredictMarketLogo';
+import { useAuth } from '@/context/AuthContext';
+import type { AuthUser } from '@/lib/auth/types';
 import { isValidEmail, isValidPassword, isValidOtp } from '@/lib/validation';
 import { parseApiResponse } from '@/lib/api-client';
 
 export default function LoginPage() {
   const router = useRouter();
   const toast = useToast();
+  const { setUser } = useAuth();
 
   const [tab, setTab] = useState<'password' | 'magic-link' | 'otp-code'>('password');
   const [email, setEmail] = useState('');
@@ -109,6 +113,9 @@ export default function LoginPage() {
         });
         toast.error(errorMessage, 'Falha no Login');
       } else {
+        if (data.user && typeof data.user === 'object') {
+          setUser(data.user as AuthUser);
+        }
         toast.success('Login realizado com sucesso! Redirecionando...', 'Bem-vindo');
         router.push('/dashboard');
       }
@@ -261,6 +268,9 @@ export default function LoginPage() {
         });
         toast.error(errorMessage, 'Código Inválido');
       } else {
+        if (data.user && typeof data.user === 'object') {
+          setUser(data.user as AuthUser);
+        }
         toast.success('Autenticação confirmada! Redirecionando...', 'Sucesso');
         router.push('/dashboard');
       }
@@ -282,15 +292,15 @@ export default function LoginPage() {
         <span>Início</span>
       </Link>
 
-      <div className="text-center space-y-2">
-        <div className="w-10 h-10 rounded-sm bg-primary text-white font-bold text-xl flex items-center justify-center mx-auto">
-          P
+      <div className="text-center space-y-2.5">
+        <div className="flex justify-center pb-1">
+          <PredictMarketLogo size={36} showText={true} />
         </div>
         <h1 className="text-[24px] font-bold text-ink tracking-tight">
-          Entrar no PredictMarket
+          Acesse Sua Conta
         </h1>
         <p className="text-[14px] text-muted">
-          Previsão de compras e arbitragem regional de preços via NFC-e.
+          Consulte suas notas fiscais e descubra onde sua lista de compras sai mais barata.
         </p>
       </div>
 

@@ -11,6 +11,9 @@ import { CityAutocomplete } from '@/components/ui/CityAutocomplete';
 import { PasswordStrengthMeter } from '@/components/ui/PasswordStrengthMeter';
 import { useToast } from '@/components/ui/Toast';
 import { FeedbackAlert } from '@/components/ui/FeedbackAlert';
+import { PredictMarketLogo } from '@/components/ui/PredictMarketLogo';
+import { useAuth } from '@/context/AuthContext';
+import type { AuthUser } from '@/lib/auth/types';
 import { isValidEmail, isValidPassword } from '@/lib/validation';
 import { parseApiResponse } from '@/lib/api-client';
 import { isSantaCatarinaCity } from '@/data/santa-catarina-cities';
@@ -18,6 +21,7 @@ import { isSantaCatarinaCity } from '@/data/santa-catarina-cities';
 export default function SignUpPage() {
   const router = useRouter();
   const toast = useToast();
+  const { setUser } = useAuth();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -130,6 +134,9 @@ export default function SignUpPage() {
         });
         toast.error(errorMessage, 'Erro no Cadastro');
       } else {
+        if (data.user && typeof data.user === 'object') {
+          setUser(data.user as AuthUser);
+        }
         setStatus('success');
         toast.success('Conta criada com sucesso! Redirecionando...', 'Cadastro Concluído');
         router.push('/dashboard');
@@ -152,15 +159,15 @@ export default function SignUpPage() {
         <span>Já tenho uma conta</span>
       </Link>
 
-      <div className="text-center space-y-2">
-        <div className="w-10 h-10 rounded-sm bg-primary text-white font-bold text-xl flex items-center justify-center mx-auto">
-          P
+      <div className="text-center space-y-2.5">
+        <div className="flex justify-center pb-1">
+          <PredictMarketLogo size={36} showText={true} />
         </div>
         <h1 className="text-[24px] font-bold text-ink tracking-tight">
-          Criar Conta no PredictMarket
+          Comece a Economizar Grátis
         </h1>
         <p className="text-[14px] text-muted">
-          Previsão de inflação pessoal e inteligência de supermercados para a sua cidade.
+          Compare preços reais da sua cidade e pague menos nas compras do mês.
         </p>
       </div>
 

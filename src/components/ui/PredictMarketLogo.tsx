@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 export interface PredictMarketLogoProps {
   size?: number;
@@ -13,81 +13,130 @@ export const PredictMarketLogo: React.FC<PredictMarketLogoProps> = ({
   className = '',
   theme = 'auto',
 }) => {
-  const isLight = theme === 'light';
-  const textColor = isLight ? 'text-ink' : 'text-current';
-  const greenColor = isLight ? '#059669' : '#10b981';
+  const uid = useId().replace(/:/g, '');
+  const isDark = theme === 'dark';
+  const primaryTextClass = isDark ? 'text-white' : 'text-ink';
+  const accentStart = isDark ? '#34d399' : '#10b981';
+  const accentEnd = isDark ? '#10b981' : '#047857';
+  const wordmarkAccent = isDark ? '#34d399' : '#059669';
+
+  const fontSize = Math.round(size * 0.62);
+  const gapSize = Math.max(8, Math.round(size * 0.26));
 
   return (
-    <div className={`inline-flex items-center gap-2 select-none ${className}`}>
+    <div
+      className={`inline-flex items-center select-none group ${className}`}
+      style={{ gap: `${gapSize}px` }}
+    >
       <svg
         width={size}
         height={size}
-        viewBox="0 0 100 100"
+        viewBox="0 0 40 40"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0"
+        className={`shrink-0 ${primaryTextClass} transition-transform duration-300 group-hover:scale-[1.03]`}
         aria-hidden="true"
       >
+        <defs>
+          <linearGradient id={`pm-ribbon-${uid}`} x1="10" y1="10" x2="36" y2="24" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor={accentStart} />
+            <stop offset="100%" stopColor={accentEnd} />
+          </linearGradient>
+        </defs>
+
         <path
-          d="M 20 28 L 29 28 L 31 35"
+          d="M 3.5 7.5 H 9.2 L 13.8 25.2 Q 14.3 27.2 16.4 27.2 H 29.8"
           stroke="currentColor"
+          strokeWidth="3.3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        <path
+          d="M 13.2 20.5 H 22.2"
+          stroke="currentColor"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+          opacity="0.24"
+        />
+
+        <path
+          d="M 11.2 13.2 H 18.8 L 22.6 17.2 L 26.8 11.8 L 35.5 20.5"
+          stroke={`url(#pm-ribbon-${uid})`}
           strokeWidth="3.5"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
+
         <path
-          d="M 32 41 L 54 41 C 58 41 61 45 64 49 C 66 45 68 39 73 39 C 76 39 77 42 76 47 L 71 62 C 70 65 67 67 64 67 L 39 67 C 36 67 33 64 34 61 L 40 41"
+          d="M 29.2 20.5 H 35.5 V 14.2"
+          stroke={`url(#pm-ribbon-${uid})`}
+          strokeWidth="3.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        <circle
+          cx="16.2"
+          cy="33.2"
+          r="2.7"
           stroke="currentColor"
-          strokeWidth="3.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="0.95"
+          strokeWidth="2.8"
+          fill="none"
         />
-        <path
-          d="M 36 73 L 68 73"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-          opacity="0.45"
+        <circle
+          cx="28.2"
+          cy="33.2"
+          r="2.7"
+          stroke={`url(#pm-ribbon-${uid})`}
+          strokeWidth="2.8"
+          fill="none"
         />
-        <text
-          x="43"
-          y="59"
-          fill={greenColor}
-          fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-          fontSize="13.5"
-          fontWeight="800"
-          letterSpacing="-0.5"
-        >
-          R$
-        </text>
-        <path
-          d="M 32 44 L 52 44 L 60 53 L 66 44 L 80 59"
-          stroke={greenColor}
-          strokeWidth="3.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M 71 59 L 80 59 L 79 50"
-          stroke={greenColor}
-          strokeWidth="3.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <circle cx="43" cy="81" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-        <circle cx="63" cy="81" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
       </svg>
 
       {showText && (
         <span
-          className={`font-bold tracking-tight inline-flex items-center ${textColor}`}
-          style={{ fontSize: `${Math.round(size * 0.58)}px` }}
+          className={`inline-flex items-baseline leading-none ${primaryTextClass}`}
+          style={{
+            fontSize: `${fontSize}px`,
+            fontFamily: "var(--font-sans), -apple-system, BlinkMacSystemFont, 'Inter', sans-serif",
+          }}
         >
-          <span>Predict</span>
-          <span style={{ color: greenColor }}>Market</span>
+          <span
+            className="font-extrabold"
+            style={{ letterSpacing: '-0.045em' }}
+          >
+            Pred
+            <span className="relative inline-block">
+              ı
+              <svg
+                viewBox="0 0 8 8"
+                className="w-[0.28em] h-[0.28em] absolute -top-[0.04em] left-1/2 -translate-x-1/2"
+                aria-hidden="true"
+              >
+                <polygon points="4,0 8,4 4,8 0,4" fill={wordmarkAccent} />
+              </svg>
+            </span>
+            ct
+          </span>
+          <span
+            className="font-semibold"
+            style={{
+              color: wordmarkAccent,
+              letterSpacing: '-0.035em',
+              marginLeft: '0.02em',
+            }}
+          >
+            Market
+          </span>
+          <span
+            className="inline-block w-[0.18em] h-[0.18em] rounded-full ml-[0.08em] mb-[0.08em] shrink-0"
+            style={{ backgroundColor: wordmarkAccent }}
+            aria-hidden="true"
+          />
         </span>
       )}
     </div>
   );
 };
+

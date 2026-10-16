@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 export interface PredictMarketLoaderProps {
   size?: 'sm' | 'md' | 'lg' | number;
@@ -9,7 +9,7 @@ export interface PredictMarketLoaderProps {
 const SIZE_MAP = {
   sm: 36,
   md: 64,
-  lg: 100,
+  lg: 96,
 };
 
 export const PredictMarketLoader: React.FC<PredictMarketLoaderProps> = ({
@@ -17,126 +17,150 @@ export const PredictMarketLoader: React.FC<PredictMarketLoaderProps> = ({
   text,
   className = '',
 }) => {
+  const uid = useId().replace(/:/g, '');
   const pixelSize = typeof size === 'number' ? size : SIZE_MAP[size];
 
   return (
     <div className={`inline-flex flex-col items-center justify-center gap-3 ${className}`}>
       <style>{`
-        @keyframes pm-loader-float {
+        @keyframes pm-loader-chassis {
           0%, 100% { transform: translateY(0); }
-          25% { transform: translateY(-3px); }
-          50% { transform: translateY(0); }
-          75% { transform: translateY(-1.5px); }
+          30% { transform: translateY(-1.2px); }
+          60% { transform: translateY(0.4px); }
         }
-        @keyframes pm-loader-rs {
-          0%, 35% { opacity: 0.85; transform: scale(1); }
-          20% { opacity: 1; transform: scale(1.1); filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.6)); }
-          45%, 100% { opacity: 0.85; transform: scale(1); }
+        @keyframes pm-loader-ribbon {
+          0%, 25% {
+            stroke-dashoffset: 38;
+            opacity: 0.45;
+          }
+          55%, 80% {
+            stroke-dashoffset: 0;
+            opacity: 1;
+            filter: drop-shadow(0 2px 5px rgba(16, 185, 129, 0.45));
+          }
+          100% {
+            stroke-dashoffset: 0;
+            opacity: 0.85;
+          }
         }
-        @keyframes pm-loader-drop {
-          0%, 38% { transform: translate(0, 0); filter: drop-shadow(0 0 0 transparent); }
-          44% { transform: translate(0, -1.5px); }
-          56% { transform: translate(2.5px, 7px); filter: drop-shadow(0 3px 8px rgba(16, 185, 129, 0.85)); }
-          70% { transform: translate(2px, 6px); }
-          88%, 100% { transform: translate(0, 0); filter: drop-shadow(0 0 0 transparent); }
+        @keyframes pm-loader-arrowhead {
+          0%, 42% {
+            opacity: 0;
+            transform: translate(-2px, -2px);
+          }
+          58%, 85% {
+            opacity: 1;
+            transform: translate(0, 0);
+          }
+          100% {
+            opacity: 0.75;
+            transform: translate(0, 0);
+          }
         }
-        @keyframes pm-loader-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+        @keyframes pm-loader-node {
+          0%, 100% { opacity: 0.2; transform: scale(0.85); }
+          35% { opacity: 1; transform: scale(1.15); }
         }
-        .pm-anim-cart {
-          animation: pm-loader-float 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-          transform-origin: center;
+        .pm-anim-chassis {
+          animation: pm-loader-chassis 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
-        .pm-anim-rs {
-          animation: pm-loader-rs 2.4s ease-in-out infinite;
-          transform-origin: 43px 59px;
+        .pm-anim-ribbon {
+          stroke-dasharray: 38;
+          animation: pm-loader-ribbon 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
         }
-        .pm-anim-arrow {
-          animation: pm-loader-drop 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
-          transform-origin: 32px 44px;
+        .pm-anim-arrowhead {
+          animation: pm-loader-arrowhead 2.2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
         }
-        .pm-anim-wheel {
-          animation: pm-loader-spin 2.4s linear infinite;
-          transform-origin: center;
+        .pm-anim-node-1 {
+          animation: pm-loader-node 2.2s ease-in-out infinite 0s;
+          transform-origin: 15px 8px;
+        }
+        .pm-anim-node-2 {
+          animation: pm-loader-node 2.2s ease-in-out infinite 0.18s;
+          transform-origin: 20px 8px;
+        }
+        .pm-anim-node-3 {
+          animation: pm-loader-node 2.2s ease-in-out infinite 0.36s;
+          transform-origin: 25px 8px;
         }
       `}</style>
 
       <svg
         width={pixelSize}
         height={pixelSize}
-        viewBox="0 0 100 100"
+        viewBox="0 0 40 40"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="overflow-visible shrink-0 text-ink"
         aria-label="Carregando"
       >
-        <g className="pm-anim-cart">
+        <defs>
+          <linearGradient id={`pm-loader-grad-${uid}`} x1="10" y1="10" x2="36" y2="24" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#10b981" />
+            <stop offset="100%" stopColor="#047857" />
+          </linearGradient>
+        </defs>
+
+        <circle className="pm-anim-node-1" cx="15" cy="7.5" r="1.2" fill="#10b981" />
+        <circle className="pm-anim-node-2" cx="20" cy="7.5" r="1.2" fill="#10b981" />
+        <circle className="pm-anim-node-3" cx="25" cy="7.5" r="1.2" fill="#10b981" />
+
+        <g className="pm-anim-chassis">
           <path
-            d="M 20 28 L 29 28 L 31 35"
+            d="M 3.5 7.5 H 9.2 L 13.8 25.2 Q 14.3 27.2 16.4 27.2 H 29.8"
             stroke="currentColor"
+            strokeWidth="3.3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+
+          <path
+            d="M 13.2 20.5 H 22.2"
+            stroke="currentColor"
+            strokeWidth="2.6"
+            strokeLinecap="round"
+            opacity="0.24"
+          />
+
+          <path
+            className="pm-anim-ribbon"
+            d="M 11.2 13.2 H 18.8 L 22.6 17.2 L 26.8 11.8 L 35.5 20.5"
+            stroke={`url(#pm-loader-grad-${uid})`}
             strokeWidth="3.5"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
+
           <path
-            d="M 32 41 L 54 41 C 58 41 61 45 64 49 C 66 45 68 39 73 39 C 76 39 77 42 76 47 L 71 62 C 70 65 67 67 64 67 L 39 67 C 36 67 33 64 34 61 L 40 41"
-            stroke="currentColor"
-            strokeWidth="3.2"
+            className="pm-anim-arrowhead"
+            d="M 29.2 20.5 H 35.5 V 14.2"
+            stroke={`url(#pm-loader-grad-${uid})`}
+            strokeWidth="3.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            opacity="0.9"
           />
-          <path
-            d="M 36 73 L 68 73"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            opacity="0.4"
-          />
-
-          <text
-            className="pm-anim-rs"
-            x="43"
-            y="59"
-            fill="#10b981"
-            fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-            fontSize="13.5"
-            fontWeight="800"
-            letterSpacing="-0.5"
-          >
-            R$
-          </text>
-
-          <g className="pm-anim-arrow">
-            <path
-              d="M 32 44 L 52 44 L 60 53 L 66 44 L 80 59"
-              stroke="#10b981"
-              strokeWidth="3.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M 71 59 L 80 59 L 79 50"
-              stroke="#10b981"
-              strokeWidth="3.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </g>
         </g>
 
-        <g transform="translate(43, 81)">
-          <circle cx="0" cy="0" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle className="pm-anim-wheel" cx="0" cy="0" r="1.5" fill="#10b981" />
-        </g>
-        <g transform="translate(63, 81)">
-          <circle cx="0" cy="0" r="4" stroke="currentColor" strokeWidth="3" fill="none" />
-          <circle className="pm-anim-wheel" cx="0" cy="0" r="1.5" fill="#10b981" />
-        </g>
+        <circle
+          cx="16.2"
+          cy="33.2"
+          r="2.7"
+          stroke="currentColor"
+          strokeWidth="2.8"
+          fill="none"
+        />
+        <circle
+          cx="28.2"
+          cy="33.2"
+          r="2.7"
+          stroke={`url(#pm-loader-grad-${uid})`}
+          strokeWidth="2.8"
+          fill="none"
+        />
       </svg>
 
       {text && <p className="text-[14px] font-medium text-muted animate-pulse">{text}</p>}
     </div>
   );
 };
+

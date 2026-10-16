@@ -17,7 +17,7 @@ export const Badge: React.FC<BadgeProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold leading-[1.18]';
+    'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold leading-[1.18] whitespace-nowrap shrink-0';
 
   const variantStyles: Record<string, string> = {
     neutral: 'bg-surface-strong text-ink',

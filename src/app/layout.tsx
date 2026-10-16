@@ -6,9 +6,9 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { AuthProvider } from '@/context/AuthContext';
 
 export const metadata: Metadata = {
-  title: 'PredictMarket - Previsão de Gastos de Supermercado',
+  title: 'PredictMarket — Economize nas Compras de Supermercado com Dados Reais',
   description:
-    'Motor estatístico de previsão de compras mensais e arbitragem de supermercados via NFC-e.',
+    'Escaneie notas fiscais pelo QR Code, acompanhe o preço real de cada produto e descubra em qual supermercado sua lista sai mais barata.',
   manifest: '/manifest.json',
   icons: {
     icon: [
@@ -32,8 +32,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body className="bg-canvas text-ink min-h-screen flex flex-col pb-16 md:pb-0">
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body
+        suppressHydrationWarning
+        className="bg-canvas text-ink min-h-screen flex flex-col pb-16 md:pb-0"
+      >
         <ToastProvider>
           <AuthProvider>
             <AppShell>{children}</AppShell>

@@ -116,8 +116,8 @@ function ScannerContent() {
     <div className="max-w-[1080px] mx-auto px-4 sm:px-6 py-8 space-y-8">
       <PageHeader
         backHref="/receipts"
-        title="Ingestão de Cupom (NFC-e)"
-        description="Aponte a câmera para o QR Code da nota fiscal ou digite a chave de 44 dígitos."
+        title="Importar Nota Fiscal"
+        description="Escaneie o QR Code do cupom fiscal ou digite os 44 números da chave de acesso para atualizar seus preços."
         badge={
           <Badge variant="optimistic" className="gap-1 py-0.5 px-2.5 text-[12px]">
             <Sparkle size={12} weight="bold" />
@@ -130,7 +130,7 @@ function ScannerContent() {
         <Card variant="bordered" className="p-8 text-center space-y-4">
           <PredictMarketLoader size="lg" text={feedbackMessage} />
           <p className="text-[13px] text-muted">
-            Normalizando produtos canônicos e extraindo preços vigentes...
+            Identificando os produtos da sua compra e atualizando o histórico de preços...
           </p>
         </Card>
       )}
@@ -138,7 +138,7 @@ function ScannerContent() {
       {status === 'success' && (
         <Card variant="bordered" className="p-8 text-center space-y-4 bg-surface-soft">
           <CheckCircle size={48} weight="fill" className="text-primary mx-auto" />
-          <h2 className="text-[22px] font-bold text-ink">Nota Fiscal Processada</h2>
+          <h2 className="text-[22px] font-bold text-ink">Nota Fiscal Importada com Sucesso</h2>
           <p className="text-[14px] text-body">{feedbackMessage}</p>
 
           {receiptSummary && (
@@ -167,10 +167,10 @@ function ScannerContent() {
               </Button>
             )}
             <Button variant="secondary" onClick={() => router.push('/dashboard')}>
-              Ver Previsão Atualizada
+              Ver Painel Atualizado
             </Button>
             <Button variant="secondary" onClick={() => setStatus('idle')}>
-              Escanear Outra Nota
+              Importar Outra Nota
             </Button>
           </div>
         </Card>
@@ -182,16 +182,16 @@ function ScannerContent() {
             <Prohibit size={38} weight="bold" />
           </div>
           <Badge variant="pessimistic" className="py-1 px-3 text-[12px]">
-            Chave Duplicada · Importação Bloqueada
+            Nota Já Cadastrada
           </Badge>
-          <h2 className="text-[22px] font-bold text-ink">Esta Nota Fiscal Já Foi Adicionada</h2>
+          <h2 className="text-[22px] font-bold text-ink">Esta Nota Fiscal Já Está na Sua Conta</h2>
           <p className="text-[14px] text-muted max-w-md mx-auto">
             {feedbackMessage}
           </p>
 
           {receiptSummary && (
             <div className="p-4 rounded-md bg-surface-soft border border-hairline max-w-sm mx-auto text-left space-y-1">
-              <span className="text-[11px] font-semibold text-muted uppercase">Cupom Existente</span>
+              <span className="text-[11px] font-semibold text-muted uppercase">Compra Registrada</span>
               <p className="text-[15px] font-semibold text-ink">{receiptSummary.storeName}</p>
               <div className="flex justify-between text-[13px] text-muted pt-1">
                 <span>{receiptSummary.itemsCount} produtos cadastrados</span>
@@ -208,14 +208,14 @@ function ScannerContent() {
                 variant="primary"
                 onClick={() => router.push(`/receipts/${processedReceiptId}`)}
               >
-                Ver Detalhes da Nota Já Salva
+                Ver Detalhes da Nota Salva
               </Button>
             )}
             <Button variant="secondary" onClick={() => router.push('/receipts')}>
               Ver Minhas Notas Fiscais
             </Button>
             <Button variant="secondary" onClick={() => setStatus('idle')}>
-              Escanear Outro Cupom
+              Importar Outra Nota
             </Button>
           </div>
         </Card>
@@ -224,7 +224,7 @@ function ScannerContent() {
       {status === 'error' && (
         <Card variant="bordered" className="p-8 text-center space-y-4">
           <WarningCircle size={48} weight="bold" className="text-error mx-auto" />
-          <h2 className="text-[20px] font-bold text-ink">Não Foi Possível Ingerir a Nota</h2>
+          <h2 className="text-[20px] font-bold text-ink">Não Foi Possível Importar a Nota</h2>
           <p className="text-[14px] text-error">{feedbackMessage}</p>
           <Button variant="secondary" onClick={() => setStatus('idle')}>
             Tentar Novamente

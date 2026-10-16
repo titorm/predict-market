@@ -21,6 +21,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Select } from '@/components/ui/Select';
 import { ProductHistoryDrawer } from '@/components/products/ProductHistoryDrawer';
 import { PredictMarketLoader } from '@/components/ui/PredictMarketLoader';
+import { classifyProductsWithBrowserAI } from '@/core/categorization/LocalProductCategorizer';
 
 interface PurchasedProductItem {
   id: string;
@@ -65,9 +66,21 @@ export default function PurchasedProductsPage() {
         const data = (await res.json()) as { products: PurchasedProductItem[] };
 
         if (isMounted && Array.isArray(data.products)) {
-          queueMicrotask(() => {
-            setProducts(data.products);
-          });
+          const { items, corrections } = await classifyProductsWithBrowserAI(
+            data.products
+          );
+          if (isMounted) {
+            queueMicrotask(() => {
+              setProducts(items);
+            });
+          }
+          if (corrections.length > 0) {
+            fetch('/api/products', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ corrections }),
+            }).catch(() => {});
+          }
         }
       } catch {
       } finally {
@@ -158,12 +171,12 @@ export default function PurchasedProductsPage() {
       <main className="max-w-[1080px] mx-auto px-4 sm:px-6 py-8 space-y-8">
         <PageHeader
           title="Produtos Comprados"
-          description="Acompanhe o histórico de preços, compras registradas e variação entre supermercados."
+          description="Consulte quanto você pagou em cada item ao longo do tempo e identifique onde comprar mais barato."
           badge={
             <div className="flex items-center gap-2">
               <Badge variant="neutral" className="gap-1.5 py-0.5 px-2.5 text-[12px]">
                 <Tag size={13} weight="bold" />
-                <span>Catálogo Canônico</span>
+                <span>Histórico de Preços</span>
               </Badge>
               <Badge variant="optimistic" className="gap-1 py-0.5 px-2.5 text-[12px]">
                 <Sparkle size={13} weight="bold" />
@@ -177,7 +190,7 @@ export default function PurchasedProductsPage() {
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-[13px] font-semibold bg-primary text-white hover:bg-primary-hover shadow-xs transition-colors"
             >
               <QrCode size={16} weight="bold" />
-              <span>Escanear Nova Nota</span>
+              <span>Importar Nova Nota</span>
             </Link>
           }
         />
@@ -185,42 +198,42 @@ export default function PurchasedProductsPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <Card variant="bordered" className="p-4 sm:p-5">
             <span className="text-[11px] font-bold text-muted uppercase tracking-wider block">
-              Produtos Catalogados
+              Produtos Monitorados
             </span>
             <strong className="text-[22px] sm:text-[26px] font-bold text-ink tabular-nums mt-1 block">
               {products.length}
             </strong>
-            <span className="text-[12px] text-muted">itens únicos identificados</span>
+            <span className="text-[12px] text-muted">itens únicos nas suas compras</span>
           </Card>
 
           <Card variant="bordered" className="p-4 sm:p-5">
             <span className="text-[11px] font-bold text-muted uppercase tracking-wider block">
-              Total de Ocorrências
+              Preços Registrados
             </span>
             <strong className="text-[22px] sm:text-[26px] font-bold text-ink tabular-nums mt-1 block">
               {totalPurchases}
             </strong>
-            <span className="text-[12px] text-muted">registros em cupons</span>
+            <span className="text-[12px] text-muted">compras comparadas</span>
           </Card>
 
           <Card variant="bordered" className="p-4 sm:p-5">
             <span className="text-[11px] font-bold text-muted uppercase tracking-wider block">
-              Preço Médio da Cesta
+              Ticket Médio por Item
             </span>
             <strong className="text-[22px] sm:text-[26px] font-bold text-primary tabular-nums mt-1 block">
               {formatBRL(avgOverallPrice)}
             </strong>
-            <span className="text-[12px] text-muted">por unidade padrão</span>
+            <span className="text-[12px] text-muted">média dos últimos preços</span>
           </Card>
 
           <Card variant="bordered" className="p-4 sm:p-5">
             <span className="text-[11px] font-bold text-muted uppercase tracking-wider block">
-              Categorias Ativas
+              Categorias da Casa
             </span>
             <strong className="text-[22px] sm:text-[26px] font-bold text-ink tabular-nums mt-1 block">
               {categories.length - 1}
             </strong>
-            <span className="text-[12px] text-muted">departamentos de mercado</span>
+            <span className="text-[12px] text-muted">setores organizados por IA</span>
           </Card>
         </div>
 
@@ -250,17 +263,44 @@ export default function PurchasedProductsPage() {
                 id="sort-select"
                 size="sm"
                 variant="default"
-                containerClassName="w-auto min-w-[160px]"
+                containerClassName="w-auto min-w-[180px]"
+                dropdownClassName="right-0 left-auto min-w-[260px]"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
                 aria-label="Ordenar por"
-              >
-                <option value="recent">Mais Recentes</option>
-                <option value="purchases">Mais Comprados</option>
-                <option value="price-asc">Menor Preço</option>
-                <option value="price-desc">Maior Preço</option>
-                <option value="name">Nome (A-Z)</option>
-              </Select>
+                options={[
+                  {
+                    value: 'recent',
+                    label: 'Mais Recentes',
+                    description: 'Últimas compras registradas',
+                    icon: <CalendarBlank size={15} weight="bold" />,
+                  },
+                  {
+                    value: 'purchases',
+                    label: 'Mais Comprados',
+                    description: 'Maior frequência nas notas',
+                    icon: <TrendUp size={15} weight="bold" />,
+                  },
+                  {
+                    value: 'price-asc',
+                    label: 'Menor Preço',
+                    description: 'Mais econômicos primeiro',
+                    icon: <Tag size={15} weight="bold" />,
+                  },
+                  {
+                    value: 'price-desc',
+                    label: 'Maior Preço',
+                    description: 'Maior valor unitário',
+                    icon: <ChartLineUp size={15} weight="bold" />,
+                  },
+                  {
+                    value: 'name',
+                    label: 'Nome (A-Z)',
+                    description: 'Ordem alfabética crescente',
+                    icon: <Package size={15} weight="bold" />,
+                  },
+                ]}
+              />
             </div>
           </div>
 

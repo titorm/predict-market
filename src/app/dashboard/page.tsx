@@ -135,20 +135,20 @@ export default function DashboardGeneralPage() {
   return (
     <div className="max-w-[1080px] mx-auto px-4 sm:px-6 py-8 space-y-8">
       <PageHeader
-        title="Dashboard Geral"
-        description="Visão consolidada das suas compras, economia acumulada e produtos monitorados."
+        title="Resumo Financeiro"
+        description="Acompanhe quanto você já economizou, seus gastos mensais e a variação de preços dos seus produtos."
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Link href="/forecast">
               <Button variant="primary" size="md" className="gap-2 rounded-full">
                 <ShoppingCart size={16} weight="bold" />
-                <span>Previsão de Gastos</span>
+                <span>Simular Próxima Compra</span>
               </Button>
             </Link>
             <Link href="/scanner">
               <Button variant="secondary" size="md" className="gap-2 rounded-full">
                 <QrCode size={16} weight="bold" />
-                <span>Escanear Nova Nota</span>
+                <span>Importar Nota</span>
               </Button>
             </Link>
           </div>
@@ -160,7 +160,7 @@ export default function DashboardGeneralPage() {
           <Card variant="bordered" className="p-5 bg-canvas border-hairline hover:border-ink/30 transition-all space-y-3 h-full">
             <div className="flex items-center justify-between">
               <span className="text-[12px] font-semibold text-muted uppercase tracking-wider">
-                Notas Importadas
+                Compras Registradas
               </span>
               <div className="w-8 h-8 rounded-lg bg-surface-soft text-ink flex items-center justify-center group-hover:bg-ink group-hover:text-canvas transition-colors">
                 <Receipt size={18} weight="bold" />
@@ -171,7 +171,7 @@ export default function DashboardGeneralPage() {
                 {stats.receiptsCount}
               </strong>
               <p className="text-[12px] text-muted truncate">
-                Total registrado: {formatBRL(stats.totalSpentBRL)}
+                Total investido: {formatBRL(stats.totalSpentBRL)}
               </p>
             </div>
             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary group-hover:translate-x-0.5 transition-transform">
@@ -201,13 +201,13 @@ export default function DashboardGeneralPage() {
                 </Badge>
                 <span className="text-[11px] text-muted">
                   {stats.totalSpentBRL > 0 && stats.totalSavedBRL > 0
-                    ? `${Math.round((stats.totalSavedBRL / (stats.totalSpentBRL + stats.totalSavedBRL)) * 100)}% de economia obtida`
-                    : 'Descontos das notas'}
+                    ? `${Math.round((stats.totalSavedBRL / (stats.totalSpentBRL + stats.totalSavedBRL)) * 100)}% poupado nas notas`
+                    : 'Auditado nas notas'}
                 </span>
               </div>
             </div>
             <p className="text-[11px] text-muted">
-              Total de descontos e promoções identificadas em suas compras.
+              Soma dos descontos diretos e ofertas aproveitadas nas suas compras.
             </p>
           </Card>
         </div>
@@ -216,7 +216,7 @@ export default function DashboardGeneralPage() {
           <Card variant="bordered" className="p-5 bg-canvas border-hairline hover:border-ink/30 transition-all space-y-3 h-full">
             <div className="flex items-center justify-between">
               <span className="text-[12px] font-semibold text-muted uppercase tracking-wider">
-                Carrinhos Criados
+                Listas Planejadas
               </span>
               <div className="w-8 h-8 rounded-lg bg-surface-soft text-ink flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
                 <ShoppingCart size={18} weight="bold" />
@@ -227,11 +227,11 @@ export default function DashboardGeneralPage() {
                 {stats.basketsCount}
               </strong>
               <p className="text-[12px] text-muted">
-                Previsões e listas ativas
+                Simulações de compra salvas
               </p>
             </div>
             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary group-hover:translate-x-0.5 transition-transform">
-              <span>Montar novo carrinho</span>
+              <span>Planejar nova compra</span>
               <ArrowRight size={12} weight="bold" />
             </span>
           </Card>
@@ -241,7 +241,7 @@ export default function DashboardGeneralPage() {
           <Card variant="bordered" className="p-5 bg-canvas border-hairline hover:border-ink/30 transition-all space-y-3 h-full">
             <div className="flex items-center justify-between">
               <span className="text-[12px] font-semibold text-muted uppercase tracking-wider">
-                Produtos na Base
+                Produtos Monitorados
               </span>
               <div className="w-8 h-8 rounded-lg bg-surface-soft text-ink flex items-center justify-center group-hover:bg-ink group-hover:text-canvas transition-colors">
                 <Tag size={18} weight="bold" />
@@ -252,11 +252,11 @@ export default function DashboardGeneralPage() {
                 {stats.productsCount}
               </strong>
               <p className="text-[12px] text-muted">
-                Com histórico de preços mapeado
+                Com histórico de preço por loja
               </p>
             </div>
             <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary group-hover:translate-x-0.5 transition-transform">
-              <span>Ver histórico de preços</span>
+              <span>Consultar preços</span>
               <ArrowRight size={12} weight="bold" />
             </span>
           </Card>
@@ -269,9 +269,9 @@ export default function DashboardGeneralPage() {
             <Receipt size={24} weight="bold" />
           </div>
           <div className="space-y-1 max-w-md mx-auto">
-            <h3 className="text-[18px] font-bold text-ink">Nenhuma nota fiscal cadastrada ainda</h3>
+            <h3 className="text-[18px] font-bold text-ink">Comece importando sua primeira nota fiscal</h3>
             <p className="text-[13px] text-muted">
-              Importe sua primeira NFC-e via QR Code para gerar gráficos de histórico, calcular previsões de compras e comparar preços entre redes.
+              Escaneie o QR Code de qualquer cupom de supermercado para descobrir a variação de preços dos seus itens e planejar compras mais baratas.
             </p>
           </div>
           <Link href="/scanner">

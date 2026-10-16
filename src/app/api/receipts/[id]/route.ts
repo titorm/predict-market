@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 import { logDevError, formatDevErrorResponse } from '@/lib/dev-logger';
+import { classifyProductCategorySemantic } from '@/core/categorization/LocalProductCategorizer';
 
 interface ReceiptHeaderRow {
   id: string;
@@ -116,21 +117,25 @@ export async function GET(
       [id]
     );
 
-    const items = itemsRows.map((item) => ({
-      id: item.id,
-      canonicalProductId: item.canonical_product_id ?? null,
-      itemIndex: item.item_index,
-      rawDescription: item.raw_description,
-      commercialName: item.commercial_name ?? item.raw_description,
-      category: item.category ?? 'Geral',
-      standardUnit: item.standard_unit ?? item.unit_of_measure,
-      quantity: Number(item.quantity),
-      unitOfMeasure: item.unit_of_measure,
-      unitPrice: Number(item.unit_price),
-      totalPrice: Number(item.total_price),
-      discountValue: Number(item.discount_value ?? 0),
-      purchasedAt: item.purchased_at,
-    }));
+    const items = itemsRows.map((item) => {
+      const baseName = item.commercial_name ?? item.raw_description;
+      const classification = classifyProductCategorySemantic(baseName);
+      return {
+        id: item.id,
+        canonicalProductId: item.canonical_product_id ?? null,
+        itemIndex: item.item_index,
+        rawDescription: item.raw_description,
+        commercialName: classification.normalizedName || baseName,
+        category: classification.category,
+        standardUnit: item.standard_unit ?? item.unit_of_measure,
+        quantity: Number(item.quantity),
+        unitOfMeasure: item.unit_of_measure,
+        unitPrice: Number(item.unit_price),
+        totalPrice: Number(item.total_price),
+        discountValue: Number(item.discount_value ?? 0),
+        purchasedAt: item.purchased_at,
+      };
+    });
 
     return NextResponse.json({
       receipt: {

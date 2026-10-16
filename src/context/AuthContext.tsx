@@ -9,7 +9,7 @@ import React, {
   useCallback,
   ReactNode,
 } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import type { AuthUser } from '@/lib/auth/types';
 import { useToast } from '@/components/ui/Toast';
 
@@ -28,6 +28,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const toast = useToast();
 
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -39,6 +40,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     userRef.current = user;
   }, [user]);
+
+  const loadCurrentUser = useCallback(async (): Promise<AuthUser | null> => {
+    try {
+      const res = await fetch('/api/auth/me', { cache: 'no-store' });
+      if (res.ok) {
+        const data = (await res.json()) as { user: AuthUser | null };
+        lastRefreshRef.current = Date.now();
+        userRef.current = data.user ?? null;
+        queueMicrotask(() => {
+          setUser(data.user ?? null);
+          setIsLoading(false);
+        });
+        return data.user ?? null;
+      }
+      userRef.current = null;
+      queueMicrotask(() => {
+        setUser(null);
+        setIsLoading(false);
+      });
+      return null;
+    } catch {
+      queueMicrotask(() => {
+        setUser(null);
+        setIsLoading(false);
+      });
+      return null;
+    }
+  }, []);
 
   const refreshSession = useCallback(async (): Promise<boolean> => {
     try {
@@ -57,6 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastRefreshRef.current = Date.now();
 
         if (data.user) {
+          userRef.current = data.user;
           queueMicrotask(() => {
             setUser(data.user ?? null);
           });
@@ -65,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (res.status === 401 && userRef.current) {
+        userRef.current = null;
         queueMicrotask(() => {
           setUser(null);
         });
@@ -80,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } finally {
+      userRef.current = null;
       queueMicrotask(() => {
         setUser(null);
       });
@@ -89,39 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router, toast]);
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function initialLoad() {
-      try {
-        const res = await fetch('/api/auth/me');
-        if (res.ok) {
-          const data = (await res.json()) as { user: AuthUser | null };
-          if (isMounted) {
-            lastRefreshRef.current = Date.now();
-            queueMicrotask(() => {
-              setUser(data.user);
-              setIsLoading(false);
-            });
-          }
-        } else {
-          if (isMounted) {
-            queueMicrotask(() => {
-              setUser(null);
-              setIsLoading(false);
-            });
-          }
-        }
-      } catch {
-        if (isMounted) {
-          queueMicrotask(() => {
-            setUser(null);
-            setIsLoading(false);
-          });
-        }
-      }
-    }
-
-    initialLoad();
+    loadCurrentUser();
 
     const intervalId = setInterval(() => {
       if (userRef.current) {
@@ -142,12 +142,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener('focus', handleActivity);
 
     return () => {
-      isMounted = false;
       clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleActivity);
       window.removeEventListener('focus', handleActivity);
     };
-  }, [refreshSession]);
+  }, [loadCurrentUser, refreshSession]);
+
+  useEffect(() => {
+    if (!pathname.startsWith('/auth/') && !userRef.current) {
+      loadCurrentUser();
+    }
+  }, [pathname, loadCurrentUser]);
 
   const value: AuthContextType = {
     user,
@@ -156,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshSession,
     logout,
     setUser: (newUser: AuthUser | null) => {
+      userRef.current = newUser;
       queueMicrotask(() => {
         setUser(newUser);
       });

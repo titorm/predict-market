@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { logDevError, formatDevErrorResponse } from '@/lib/dev-logger';
+import { classifyProductCategorySemantic } from '@/core/categorization/LocalProductCategorizer';
 
 interface ProductRow {
   id: string;
@@ -43,6 +44,10 @@ export async function GET(
       return NextResponse.json({ error: 'Produto não encontrado' }, { status: 404 });
     }
 
+    const classification = classifyProductCategorySemantic(prod.commercial_name);
+    const resolvedName = classification.normalizedName || prod.commercial_name;
+    const resolvedCategory = classification.category;
+
     const aliases = await db.query<AliasRow>(
       `
       SELECT spa.store_internal_code, spa.raw_description, s.trade_name
@@ -67,9 +72,9 @@ export async function GET(
     return NextResponse.json({
       product: {
         id: prod.id,
-        commercialName: prod.commercial_name,
+        commercialName: resolvedName,
         ean: prod.gtin_ean,
-        category: prod.category,
+        category: resolvedCategory,
         baseUnit: prod.standard_unit,
         netMeasure: 1.0,
       },
