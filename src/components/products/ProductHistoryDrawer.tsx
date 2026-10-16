@@ -160,14 +160,14 @@ export const ProductHistoryDrawer: React.FC<ProductHistoryDrawerProps> = ({
         aria-hidden="true"
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
+      <div className="fixed inset-y-0 right-0 max-w-full flex w-full sm:w-auto">
         <aside
           role="dialog"
           aria-modal="true"
           aria-labelledby="product-drawer-title"
-          className="w-screen max-w-md sm:max-w-lg bg-canvas border-l border-hairline shadow-2xl flex flex-col min-h-full transform transition-transform duration-300 ease-out"
+          className="w-full sm:w-screen sm:max-w-lg bg-canvas border-l border-hairline shadow-2xl flex flex-col min-h-full transform transition-transform duration-300 ease-out safe-top"
         >
-          <div className="p-5 sm:p-6 border-b border-hairline flex items-start justify-between gap-4 bg-canvas sticky top-0 z-10">
+          <div className="p-4 sm:p-6 border-b border-hairline flex items-start justify-between gap-4 bg-canvas sticky top-0 z-10">
             <div className="min-w-0 flex-1 space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 {displayCategory && (
@@ -201,7 +201,7 @@ export const ProductHistoryDrawer: React.FC<ProductHistoryDrawerProps> = ({
               type="button"
               onClick={onClose}
               aria-label="Fechar painel"
-              className="w-9 h-9 rounded-full border border-hairline flex items-center justify-center text-muted hover:text-ink hover:bg-surface-soft transition-colors shrink-0"
+              className="w-11 h-11 rounded-lg border border-hairline flex items-center justify-center text-muted hover:text-ink hover:bg-surface-soft transition-colors shrink-0 touch-target"
             >
               <X size={18} weight="bold" />
             </button>
@@ -302,12 +302,12 @@ export const ProductHistoryDrawer: React.FC<ProductHistoryDrawerProps> = ({
           </div>
 
           {productId && (
-            <div className="p-4 border-t border-hairline bg-surface-soft flex items-center justify-between text-[13px]">
+            <div className="p-4 border-t border-hairline bg-surface-soft flex items-center justify-between text-[13px] safe-bottom">
               <span className="text-muted text-[12px]">Precisa compartilhar?</span>
               <Link
                 href={`/products/${productId}`}
                 onClick={onClose}
-                className="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline"
+                className="inline-flex items-center min-h-[44px] py-2 px-3 gap-1.5 font-semibold text-primary hover:underline touch-target"
               >
                 <span>Abrir página completa</span>
                 <ArrowSquareOut size={14} weight="bold" />

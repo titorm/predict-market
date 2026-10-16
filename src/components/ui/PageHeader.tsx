@@ -35,7 +35,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               href={backHref}
               aria-label={backLabel}
               title={backLabel}
-              className="w-9 h-9 rounded-full border border-hairline flex items-center justify-center text-ink hover:bg-surface-soft hover:border-hairline-strong transition-colors shrink-0"
+              className="w-10 h-10 rounded-full border border-hairline flex items-center justify-center text-ink hover:bg-surface-soft hover:border-hairline-strong transition-colors shrink-0 touch-target"
             >
               <ArrowLeft size={18} weight="bold" />
             </Link>
@@ -46,14 +46,14 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               onClick={onBack}
               aria-label={backLabel}
               title={backLabel}
-              className="w-9 h-9 rounded-full border border-hairline flex items-center justify-center text-ink hover:bg-surface-soft hover:border-hairline-strong transition-colors shrink-0"
+              className="w-10 h-10 rounded-full border border-hairline flex items-center justify-center text-ink hover:bg-surface-soft hover:border-hairline-strong transition-colors shrink-0 touch-target"
             >
               <ArrowLeft size={18} weight="bold" />
             </button>
           )}
           <div className="min-w-0 flex-1">
             {typeof title === 'string' ? (
-              <h1 className="text-[26px] sm:text-[30px] font-bold text-ink tracking-tight">
+              <h1 className="text-[24px] sm:text-[30px] font-bold text-ink tracking-tight leading-tight">
                 {title}
               </h1>
             ) : (
@@ -72,7 +72,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         )}
       </div>
       {actions && (
-        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 w-full sm:w-auto">
           {actions}
         </div>
       )}

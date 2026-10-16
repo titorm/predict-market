@@ -80,14 +80,14 @@ export const ForecastResultsDrawer: React.FC<ForecastResultsDrawerProps> = ({
         aria-hidden="true"
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
+      <div className="fixed inset-y-0 right-0 max-w-full flex w-full sm:w-auto">
         <aside
           role="dialog"
           aria-modal="true"
           aria-labelledby="forecast-drawer-title"
-          className="w-screen max-w-md sm:max-w-xl bg-canvas border-l border-hairline shadow-2xl flex flex-col min-h-full transform transition-transform duration-300 ease-out"
+          className="w-full sm:w-screen sm:max-w-xl bg-canvas border-l border-hairline shadow-2xl flex flex-col min-h-full transform transition-transform duration-300 ease-out safe-top"
         >
-          <div className="p-5 sm:p-6 border-b border-hairline flex items-start justify-between gap-4 bg-canvas sticky top-0 z-10">
+          <div className="p-4 sm:p-6 border-b border-hairline flex items-start justify-between gap-4 bg-canvas sticky top-0 z-10">
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex items-center gap-2">
                 <Sparkle size={20} weight="bold" className="text-primary" />
@@ -106,7 +106,7 @@ export const ForecastResultsDrawer: React.FC<ForecastResultsDrawerProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 -mr-2 text-muted hover:text-ink hover:bg-surface-soft rounded-lg transition-colors"
+              className="w-11 h-11 -mr-2 text-muted hover:text-ink hover:bg-surface-soft rounded-lg flex items-center justify-center transition-colors touch-target shrink-0"
               aria-label="Fechar painel de previsão"
             >
               <X size={20} weight="bold" />
@@ -406,14 +406,14 @@ export const ForecastResultsDrawer: React.FC<ForecastResultsDrawerProps> = ({
             )}
           </div>
 
-          <div className="p-4 sm:p-5 border-t border-hairline bg-canvas flex items-center justify-between gap-3 shrink-0">
+          <div className="p-4 sm:p-5 border-t border-hairline bg-canvas flex items-center justify-between gap-3 shrink-0 safe-bottom">
             <span className="text-[12px] text-muted">
               Previsão calculada com base estatística regional.
             </span>
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-full border border-hairline bg-surface-soft hover:bg-surface-strong text-ink text-[12px] font-medium transition-colors"
+              className="px-4 py-2.5 min-h-[44px] rounded-full border border-hairline bg-surface-soft hover:bg-surface-strong text-ink text-[12px] font-medium transition-colors touch-target"
             >
               Fechar Painel
             </button>

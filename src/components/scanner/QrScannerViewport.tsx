@@ -118,7 +118,7 @@ export const QrScannerViewport: React.FC<QrScannerViewportProps> = ({
   };
 
   return (
-    <Card variant="bordered" className="max-w-md mx-auto p-6 text-center">
+    <Card variant="bordered" className="max-w-md mx-auto p-4 sm:p-6 text-center">
       <div className="flex justify-center flex-wrap gap-2 mb-6">
         <Button
           type="button"
@@ -128,7 +128,7 @@ export const QrScannerViewport: React.FC<QrScannerViewportProps> = ({
             setCameraError(null);
             setMode('camera');
           }}
-          className="gap-1.5"
+          className="gap-1.5 min-h-[44px] flex-1 sm:flex-initial touch-target"
         >
           <Camera size={16} weight="bold" />
           <span>Câmera QR</span>
@@ -141,7 +141,7 @@ export const QrScannerViewport: React.FC<QrScannerViewportProps> = ({
             setCameraError(null);
             setMode('manual');
           }}
-          className="gap-1.5"
+          className="gap-1.5 min-h-[44px] flex-1 sm:flex-initial touch-target"
         >
           <Keyboard size={16} weight="bold" />
           <span>Chave 44 dígitos</span>
@@ -154,7 +154,7 @@ export const QrScannerViewport: React.FC<QrScannerViewportProps> = ({
             setCameraError(null);
             setMode('file');
           }}
-          className="gap-1.5"
+          className="gap-1.5 min-h-[44px] flex-1 sm:flex-initial touch-target"
         >
           <UploadSimple size={16} weight="bold" />
           <span>Foto / Arquivo</span>

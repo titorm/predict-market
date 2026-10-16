@@ -48,11 +48,11 @@ export const Modal: React.FC<ModalProps> = ({
         aria-hidden="true"
       />
       <div
-        className={`relative w-full ${maxWidth} bg-canvas rounded-md border border-hairline shadow-airbnb p-6 z-10`}
+        className={`relative w-full ${maxWidth} max-h-[90vh] overflow-y-auto overflow-touch bg-canvas rounded-xl sm:rounded-md border border-hairline shadow-airbnb p-4 sm:p-6 z-10 safe-bottom`}
       >
-        <div className="flex items-center justify-between pb-4 border-b border-hairline mb-4">
+        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-hairline mb-4">
           {title ? (
-            <h2 className="text-[18px] font-semibold text-ink tracking-tight">
+            <h2 className="text-[17px] sm:text-[18px] font-semibold text-ink tracking-tight">
               {title}
             </h2>
           ) : (
@@ -62,7 +62,7 @@ export const Modal: React.FC<ModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Fechar"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-ink hover:bg-surface-soft transition-colors"
+            className="w-10 h-10 rounded-full flex items-center justify-center text-ink hover:bg-surface-soft transition-colors touch-target shrink-0"
           >
             <X size={18} weight="bold" />
           </button>
